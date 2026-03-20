@@ -1,0 +1,593 @@
+#!/usr/bin/env node
+/**
+ * Gerador de Descritivo Funcional Guardian PRO
+ * Usa docx-js para produzir DOCX com layout fiel ao modelo Toledo
+ */
+
+const {
+  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  Header, Footer, ImageRun, AlignmentType, HeadingLevel, PageBreak,
+  WidthType, ShadingType, BorderStyle, VerticalAlign, PageNumber,
+  TableOfContents, LevelFormat, ExternalHyperlink, TabStopType, TabStopPosition,
+  HorizontalPositionAlign, HorizontalPositionRelativeFrom,
+  VerticalPositionAlign, VerticalPositionRelativeFrom,
+  TextWrappingType, TextWrappingSide,
+  PageNumberElement, PageNumberType
+} = require('docx');
+const fs = require('fs');
+const path = require('path');
+
+// ── Ler dados do stdin ─────────────────────────────────────────────────────
+let raw = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', chunk => raw += chunk);
+process.stdin.on('end', async () => {
+  try {
+    const data = JSON.parse(raw);
+    const buf = await buildDoc(data);
+    process.stdout.write(buf);
+  } catch (e) {
+    process.stderr.write('ERRO: ' + e.message + '\n' + e.stack + '\n');
+    process.exit(1);
+  }
+});
+
+// ── Cores Toledo ──────────────────────────────────────────────────────────
+const C_AZUL_ESC  = '1A3A6B';
+const C_AZUL_MED  = '2E75B6';
+const C_AZUL_CLR  = 'DCE6F1';
+const C_AZUL_ROW  = 'EBF3FB';
+const C_BRANCO    = 'FFFFFF';
+
+// ── Medidas (DXA: 1440 = 1 polegada = 2.54cm) ────────────────────────────
+// A4: 21.59cm x 27.94cm
+const PG_W    = 12242;  // 21.59cm
+const PG_H    = 15842;  // 27.94cm
+const MG_L    = 1080;   // 1.905cm
+const MG_R    = 1080;   // 1.905cm
+const MG_T    = 1440;   // 2.54cm
+const MG_B    = 1440;   // 2.54cm
+const MG_HDR  = 567;    // 1.0cm
+const MG_FTR  = 567;    // 1.0cm
+const CW      = PG_W - MG_L - MG_R;  // 10082 DXA ≈ 17.78cm
+
+// ── Bordas azuis Toledo ───────────────────────────────────────────────────
+const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: C_BRANCO };
+const NO_BORDERS = { top: NO_BORDER, bottom: NO_BORDER, left: NO_BORDER, right: NO_BORDER };
+
+const BLUE_BOTTOM = (color = C_AZUL_ESC, size = 8) => ({
+  bottom: { style: BorderStyle.SINGLE, size, color, space: 1 },
+  top: NO_BORDER, left: NO_BORDER, right: NO_BORDER
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function cm2dxa(cm) { return Math.round(cm * 1440 / 2.54); }
+function cm2emu(cm) { return Math.round(cm * 914400 / 2.54); }
+
+function spacingPara(before = 0, after = 0) {
+  return { before, after };
+}
+
+function pageProps() {
+  return {
+    page: {
+      size: { width: PG_W, height: PG_H },
+      margin: { top: MG_T, bottom: MG_B, left: MG_L, right: MG_R,
+                header: MG_HDR, footer: MG_FTR }
+    }
+  };
+}
+
+function pageBreak() {
+  return new Paragraph({ children: [new PageBreak()] });
+}
+
+function blueHline(size = 8, color = C_AZUL_ESC) {
+  return new Paragraph({
+    border: BLUE_BOTTOM(color, size),
+    spacing: spacingPara(0, 0)
+  });
+}
+
+// ── Título de seção (linha azul inferior, sem fundo) ─────────────────────
+function sectionTitle(text) {
+  return new Paragraph({
+    spacing: spacingPara(120, 80),
+    border: BLUE_BOTTOM(C_AZUL_ESC, 8),
+    children: [new TextRun({
+      text,
+      font: 'Arial Black', size: 26, bold: true, color: C_AZUL_ESC
+    })]
+  });
+}
+
+// ── H1 com fundo azul escuro ──────────────────────────────────────────────
+function h1(text) {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_1,
+    spacing: spacingPara(200, 80),
+    shading: { fill: C_AZUL_ESC, type: ShadingType.CLEAR },
+    indent: { left: 120 },
+    children: [new TextRun({
+      text, font: 'Arial Black', size: 26, bold: true, color: C_BRANCO
+    })]
+  });
+}
+
+// ── H2 com fundo azul claro + linha inferior ──────────────────────────────
+function h2(text) {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_2,
+    spacing: spacingPara(160, 60),
+    shading: { fill: C_AZUL_CLR, type: ShadingType.CLEAR },
+    border: BLUE_BOTTOM(C_AZUL_ESC, 6),
+    children: [new TextRun({
+      text, font: 'Arial Black', size: 24, bold: true, color: C_AZUL_ESC
+    })]
+  });
+}
+
+// ── H3 simples ────────────────────────────────────────────────────────────
+function h3(text) {
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_3,
+    spacing: spacingPara(120, 40),
+    children: [new TextRun({
+      text, font: 'Arial', size: 22, bold: true, color: C_AZUL_MED
+    })]
+  });
+}
+
+// ── Parágrafo normal ──────────────────────────────────────────────────────
+function para(text, opts = {}) {
+  return new Paragraph({
+    alignment: opts.center ? AlignmentType.CENTER : AlignmentType.JUSTIFY,
+    spacing: spacingPara(opts.before ?? 40, opts.after ?? 40),
+    children: [new TextRun({
+      text: text || '',
+      font: opts.font || 'Arial',
+      size: opts.size || 22,
+      bold: opts.bold || false,
+      italic: opts.italic || false,
+      color: opts.color || '000000'
+    })]
+  });
+}
+
+function emptyPara(before = 80, after = 80) {
+  return new Paragraph({ spacing: spacingPara(before, after), children: [] });
+}
+
+// ── Célula de tabela ──────────────────────────────────────────────────────
+function tc(text, w, opts = {}) {
+  const isHdr = opts.header || false;
+  return new TableCell({
+    width: { size: w, type: WidthType.DXA },
+    shading: { fill: opts.fill || (isHdr ? C_AZUL_ESC : C_BRANCO), type: ShadingType.CLEAR },
+    margins: { top: 80, bottom: 80, left: 120, right: 120 },
+    verticalAlign: VerticalAlign.CENTER,
+    children: [new Paragraph({
+      alignment: opts.align || AlignmentType.LEFT,
+      spacing: spacingPara(60, 60),
+      children: [new TextRun({
+        text: String(text || '\u2014'),
+        font: 'Arial', size: opts.size || 20,
+        bold: opts.bold !== undefined ? opts.bold : isHdr,
+        color: isHdr ? C_BRANCO : (opts.color || '000000')
+      })]
+    })]
+  });
+}
+
+// ── Tabela genérica com cabeçalho azul ───────────────────────────────────
+function makeTable(headers, rows, colWidths) {
+  const total = colWidths.reduce((a, b) => a + b, 0);
+  const hRow = new TableRow({
+    tableHeader: true,
+    children: headers.map((h, i) => tc(h, colWidths[i], { header: true }))
+  });
+  const dataRows = rows.map((row, ri) =>
+    new TableRow({
+      children: row.map((cell, ci) =>
+        tc(cell, colWidths[ci], { fill: ri % 2 === 0 ? C_BRANCO : 'F4F6FB' })
+      )
+    })
+  );
+  return new Table({
+    width: { size: total, type: WidthType.DXA },
+    columnWidths: colWidths,
+    rows: [hRow, ...dataRows]
+  });
+}
+
+// ── Tabela de informações (2 colunas: label azul + valor) ─────────────────
+function infoTable(rows, labelW, valueW) {
+  return new Table({
+    width: { size: labelW + valueW, type: WidthType.DXA },
+    columnWidths: [labelW, valueW],
+    rows: rows.map((row, ri) => new TableRow({
+      children: [
+        tc(row[0], labelW, { fill: C_AZUL_CLR, bold: true, color: C_AZUL_ESC }),
+        tc(row[1], valueW, { fill: ri % 2 === 0 ? C_BRANCO : 'F7FAFD' })
+      ]
+    }))
+  });
+}
+
+// ── Imagem inline ─────────────────────────────────────────────────────────
+function imgPara(b64str, wCm, caption = '', opts = {}) {
+  if (!b64str) return null;
+  try {
+    const b64 = b64str.includes('base64,') ? b64str.split('base64,')[1] : b64str;
+    const buf = Buffer.from(b64, 'base64');
+    const ext = b64str.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+    const wEmu = cm2emu(wCm);
+    // Calcular altura proporcional se não fornecida
+    const hEmu = opts.hCm ? cm2emu(opts.hCm) : Math.round(wEmu * 0.56);
+    const pars = [];
+    pars.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: spacingPara(opts.before ?? 60, opts.after ?? 20),
+      children: [new ImageRun({ data: buf, transformation: { width: Math.round(wEmu/9144), height: Math.round(hEmu/9144) }, type: ext })]
+    }));
+    if (caption) {
+      pars.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: spacingPara(0, 60),
+        children: [new TextRun({ text: caption, font: 'Arial', size: 18, italic: true, color: '666666' })]
+      }));
+    }
+    return pars;
+  } catch (e) {
+    process.stderr.write(`Imagem falhou (${caption}): ${e.message}\n`);
+    return null;
+  }
+}
+
+// ── Cabeçalho: logo cliente (esq) + logo PRIX (dir) ──────────────────────
+function buildHeader(clientLogoB64, prixLogoB64) {
+  const children = [];
+  
+  // Parágrafo com logo cliente à esquerda e PRIX à direita usando tab stop
+  const runs = [];
+  
+  // Logo cliente (esquerda)
+  if (clientLogoB64) {
+    try {
+      const b64 = clientLogoB64.includes('base64,') ? clientLogoB64.split('base64,')[1] : clientLogoB64;
+      const buf = Buffer.from(b64, 'base64');
+      const ext = clientLogoB64.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+      runs.push(new ImageRun({ data: buf, transformation: { width: 106, height: 40 }, type: ext }));
+    } catch(e) {
+      runs.push(new TextRun({ text: '(logo cliente)', font: 'Arial', size: 16, color: 'AAAAAA' }));
+    }
+  } else {
+    runs.push(new TextRun({ text: '', font: 'Arial', size: 16 }));
+  }
+
+  // Tab para lado direito
+  runs.push(new TextRun({ text: '\t' }));
+
+  // Logo PRIX (direita)
+  if (prixLogoB64) {
+    try {
+      const b64 = prixLogoB64.includes('base64,') ? prixLogoB64.split('base64,')[1] : prixLogoB64;
+      const buf = Buffer.from(b64, 'base64');
+      runs.push(new ImageRun({ data: buf, transformation: { width: 126, height: 53 }, type: 'png' }));
+    } catch(e) {}
+  }
+
+  children.push(new Paragraph({
+    spacing: spacingPara(0, 0),
+    tabStops: [{ type: TabStopType.RIGHT, position: CW }],
+    children: runs
+  }));
+
+  // Linha separadora azul
+  children.push(blueHline(6, C_AZUL_ESC));
+
+  return new Header({ children });
+}
+
+// ── Rodapé: nome doc (esq) | Pág X de Y (dir) ────────────────────────────
+function buildFooter(docTitle) {
+  return new Footer({
+    children: [new Paragraph({
+      border: { top: { style: BorderStyle.SINGLE, size: 6, color: 'C0C8D8', space: 1 } },
+      spacing: spacingPara(0, 0),
+      tabStops: [{ type: TabStopType.RIGHT, position: CW }],
+      children: [
+        new TextRun({ text: (docTitle || '').slice(0, 65), font: 'Arial', size: 16, color: '666666' }),
+        new TextRun({ text: '\t', font: 'Arial', size: 16 }),
+        new TextRun({ text: 'Página ', font: 'Arial', size: 16, color: '666666' }),
+        new PageNumberElement({ font: 'Arial', size: 16, color: '666666', type: PageNumberType.CURRENT }),
+      ]
+    })]
+  });
+}
+
+// ── HTML simples → parágrafos ─────────────────────────────────────────────
+function htmlToParas(html) {
+  if (!html) return [];
+  const paras = [];
+
+  // Remove script/style tags
+  html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+  html = html.replace(/<style[\s\S]*?<\/style>/gi, '');
+
+  // Split on block tags
+  const blocks = html.split(/<\/?(?:div|p|h[1-6]|ul|ol|li|table|tr|td|th|br|hr)[^>]*>/gi);
+
+  for (let block of blocks) {
+    // Get tag type from context
+    const h1m = html.match(/<h1[^>]*>(.*?)<\/h1>/gi) || [];
+    const h2m = html.match(/<h2[^>]*>(.*?)<\/h2>/gi) || [];
+    const h3m = html.match(/<h3[^>]*>(.*?)<\/h3>/gi) || [];
+
+    // Strip remaining HTML tags
+    const text = block.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '').trim();
+    if (!text) continue;
+    paras.push(para(text, { before: 40, after: 40 }));
+  }
+
+  // Better approach: use regex to find headings and paragraphs
+  const result = [];
+  const allTags = html.matchAll(/<(h[1-6]|p|li|div)[^>]*>([\s\S]*?)<\/\1>/gi);
+  const seen = new Set();
+
+  for (const m of allTags) {
+    const tag = m[1].toLowerCase();
+    const content = m[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '').trim();
+    const key = tag + '|' + content.slice(0, 50);
+    if (!content || seen.has(key)) continue;
+    seen.add(key);
+
+    if (tag === 'h1') result.push(h1(content));
+    else if (tag === 'h2') result.push(h2(content));
+    else if (tag === 'h3') result.push(h3(content));
+    else if (tag === 'li') result.push(new Paragraph({
+      spacing: spacingPara(20, 20),
+      numbering: { reference: 'bullets', level: 0 },
+      children: [new TextRun({ text: content, font: 'Arial', size: 22 })]
+    }));
+    else result.push(new Paragraph({
+      alignment: AlignmentType.JUSTIFY,
+      spacing: spacingPara(40, 40),
+      children: [new TextRun({ text: content, font: 'Arial', size: 22 })]
+    }));
+  }
+  return result.length > 0 ? result : paras;
+}
+
+// ── Construtor principal ──────────────────────────────────────────────────
+async function buildDoc(data) {
+  const cn    = (data.clientName   || '').toUpperCase();
+  const cc    = (data.clientCity   || '').toUpperCase();
+  const cu    = data.clientUnit    || '';
+  const filial = data.clientFilial || '';
+  const seg   = data.clientSegmento || '';
+  const ctHW  = data.ctHardware    || '';
+  const ctCl  = data.ctCloud       || '';
+  const analyst = data.analystName || '';
+  const rev   = data.docRevision   || 'Rev00';
+  const revDate = data.docDate     || '';
+  const revDesc = data.revDesc     || 'Geração do documento';
+  const mods  = data.mods          || {};
+  const imgs  = data.guardianImgs  || {};
+  const clientLogob64 = data.clientLogoB64 || '';
+  const prixb64 = data.prixLogoB64 || '';
+  const clientImgb64 = data.clientImgB64 || '';
+
+  const docFilename = `Descritivo Funcional_GuardianPRO_${data.clientName || 'Cliente'}_${rev}`;
+
+  // ── Seções do documento ───────────────────────────────────────────────
+  const sections = [];
+
+  // ═══════════════════════════════════════════════════════
+  // PÁGINA 1: CAPA
+  // ═══════════════════════════════════════════════════════
+  const capaContent = [];
+
+  // Banner Guardian
+  if (imgs.guardian_capa) {
+    const bannerParas = imgPara(imgs.guardian_capa, 17.8, '', { before: 0, after: 120 });
+    if (bannerParas) capaContent.push(...bannerParas);
+  }
+
+  // Título
+  capaContent.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: spacingPara(120, 40),
+    children: [new TextRun({ text: 'DESCRITIVO FUNCIONAL', font: 'Cambria', size: 40, bold: true, color: C_AZUL_ESC })]
+  }));
+
+  // Subtítulo
+  capaContent.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: spacingPara(0, 80),
+    children: [new TextRun({ text: 'GUARDIAN PRO \u2014 Software para Gerenciamento de Operações de Pesagem', font: 'Cambria', size: 26, color: '222222' })]
+  }));
+
+  // Nome cliente
+  if (cn) {
+    capaContent.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: spacingPara(60, 20),
+      children: [new TextRun({ text: cn + (cc ? ` \u2014 ${cc}` : ''), font: 'Cambria', size: 32, bold: true, color: C_AZUL_ESC })]
+    }));
+  }
+
+  if (cu) {
+    capaContent.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: spacingPara(0, 40),
+      children: [new TextRun({ text: cu, font: 'Cambria', size: 26, color: '444444' })]
+    }));
+  }
+
+  // Foto do cliente
+  if (clientImgb64) {
+    const pars = imgPara(clientImgb64, 16, '', { before: 40, after: 40 });
+    if (pars) capaContent.push(...pars);
+  }
+
+  // Tabela identificação: FAZENDA | CT/OV | CT CLOUD
+  capaContent.push(emptyPara(60, 20));
+  const idW = Math.floor(CW / 3);
+  const idW3 = CW - idW * 2;
+  capaContent.push(new Table({
+    width: { size: CW, type: WidthType.DXA },
+    columnWidths: [idW, idW, idW3],
+    rows: [
+      new TableRow({ children: [
+        tc('FAZENDA / UNIDADE',       idW,  { header: true, align: AlignmentType.CENTER }),
+        tc('CT/OV HARDWARE E SERVIÇOS', idW, { header: true, align: AlignmentType.CENTER }),
+        tc('CT CLOUD',                 idW3, { header: true, align: AlignmentType.CENTER }),
+      ]}),
+      new TableRow({ children: [
+        tc((cn || '\u2014') + (cu ? ' / ' + cu : ''), idW, { fill: C_BRANCO, align: AlignmentType.CENTER }),
+        tc(ctHW || '\u2014', idW,  { fill: C_BRANCO, align: AlignmentType.CENTER }),
+        tc(ctCl || '\u2014', idW3, { fill: C_BRANCO, align: AlignmentType.CENTER }),
+      ]})
+    ]
+  }));
+
+  // Filial e segmento
+  const infoLine = [filial ? `FILIAL(IS): ${filial.toUpperCase()}` : '', seg ? `SEGMENTO: ${seg.toUpperCase()}` : ''].filter(Boolean).join('   |   ');
+  if (infoLine) {
+    capaContent.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: spacingPara(30, 20),
+      children: [new TextRun({ text: infoLine, font: 'Cambria', size: 20, color: '444444' })]
+    }));
+  }
+
+  // URL
+  capaContent.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: spacingPara(40, 60),
+    children: [new ExternalHyperlink({
+      link: 'http://www.toledobrasil.com/produto/guardian',
+      children: [new TextRun({ text: 'www.toledobrasil.com/produto/guardian', font: 'Cambria', size: 20, color: C_AZUL_MED })]
+    })]
+  }));
+
+  capaContent.push(blueHline(8));
+  capaContent.push(pageBreak());
+
+  // ═══════════════════════════════════════════════════════
+  // PÁGINA 2: INFO DO DOCUMENTO + HISTÓRICO
+  // ═══════════════════════════════════════════════════════
+  capaContent.push(sectionTitle('Informações do Documento'));
+  capaContent.push(emptyPara(20, 20));
+
+  const LW = Math.floor(CW * 0.35);
+  const VW = CW - LW;
+  capaContent.push(infoTable([
+    ['Título do Documento', 'Descritivo Funcional'],
+    ['Autor', analyst || '\u2014'],
+    ['Nome do Arquivo', docFilename],
+  ], LW, VW));
+
+  capaContent.push(emptyPara(80, 20));
+  capaContent.push(sectionTitle('Histórico de Revisões'));
+  capaContent.push(emptyPara(20, 20));
+
+  const RW = [Math.floor(CW*0.15), Math.floor(CW*0.10), Math.floor(CW*0.50), CW - Math.floor(CW*0.15) - Math.floor(CW*0.10) - Math.floor(CW*0.50)];
+  capaContent.push(makeTable(
+    ['Data', 'Rev.', 'Descrição', 'Autor'],
+    [[revDate || '\u2014', rev, revDesc, analyst || '\u2014']],
+    RW
+  ));
+
+  capaContent.push(emptyPara(80, 20));
+  capaContent.push(blueHline(6));
+  capaContent.push(pageBreak());
+
+  // ═══════════════════════════════════════════════════════
+  // PÁGINA 3: ÍNDICE
+  // ═══════════════════════════════════════════════════════
+  capaContent.push(new Paragraph({
+    spacing: spacingPara(0, 80),
+    children: [new TextRun({ text: 'Índice', font: 'Arial Black', size: 28, bold: true, color: C_AZUL_ESC })]
+  }));
+  capaContent.push(new TableOfContents('Índice', { hyperlink: true, headingStyleRange: '1-3' }));
+  capaContent.push(pageBreak());
+
+  // ═══════════════════════════════════════════════════════
+  // CONTEÚDO HTML
+  // ═══════════════════════════════════════════════════════
+  const htmlParas = htmlToParas(data.htmlContent || '');
+  capaContent.push(...htmlParas);
+
+  // ═══════════════════════════════════════════════════════
+  // IMAGENS PADRÃO GUARDIAN
+  // ═══════════════════════════════════════════════════════
+  const addImg = (title, key, caption, wCm, condition = true) => {
+    if (!condition || !imgs[key]) return;
+    capaContent.push(emptyPara(40, 20));
+    capaContent.push(h2(title));
+    const pars = imgPara(imgs[key], wCm, caption, { before: 20, after: 20 });
+    if (pars) capaContent.push(...pars);
+  };
+
+  capaContent.push(pageBreak());
+  addImg('Arquitetura Ilustrativa da Solução', 'arq_solucao',
+    'Figura: Arquitetura ilustrativa da solução Guardian PRO', 17.0);
+  addImg('Acesso ao Sistema — Tela de Login', 'tela_login',
+    'Figura: Tela de autenticação do Guardian PRO', 14.0);
+  addImg('Tela Principal — Operação', 'tela_operacao',
+    'Figura: Tela principal de operação do Guardian PRO', 16.0);
+  addImg('Tela de Pré-Cadastro', 'tela_precadastro',
+    'Figura: Tela de pré-cadastro de veículo no Guardian PRO', 16.0);
+  addImg('Tela de Cadastramento', 'tela_cadastro',
+    'Figura: Tela de cadastramento de veículo e motorista no Guardian PRO', 16.0);
+  addImg('Modelo do TAG de Identificação', 'tag_cartao',
+    'Figura: Modelo padrão do TAG de identificação veicular — frente e verso', 14.0);
+  addImg('Tela de Pesagem', 'tela_pesagem',
+    'Figura: Tela de operação de pesagem no Guardian PRO', 16.0);
+  addImg('Gerenciamento de Filas — Exibição em TV', 'tela_filas_tv',
+    'Figura: Tela de gerenciamento de filas exibida em painel de TV', 16.0, mods.fila);
+  addImg('Tela de Inspeção Veicular', 'tela_inspecao',
+    'Figura: Tela de inspeção veicular via dispositivo móvel', 14.0, mods.inspecao);
+  addImg('Gestão de Pátios (YMS)', 'tela_patio_yms',
+    'Figura: Tela de monitoramento de pátios via Cloud Prix (YMS)', 16.0, mods.yms);
+
+  // ── Montar documento ────────────────────────────────────────────────
+  const header = buildHeader(clientLogob64, prixb64);
+  const footer = buildFooter(docFilename);
+
+  const doc = new Document({
+    styles: {
+      default: {
+        document: { run: { font: 'Arial', size: 22 } }
+      },
+      paragraphStyles: [
+        { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { font: 'Arial Black', size: 26, bold: true, color: C_BRANCO },
+          paragraph: { spacing: { before: 200, after: 80 }, outlineLevel: 0 } },
+        { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { font: 'Arial Black', size: 24, bold: true, color: C_AZUL_ESC },
+          paragraph: { spacing: { before: 160, after: 60 }, outlineLevel: 1 } },
+        { id: 'Heading3', name: 'Heading 3', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { font: 'Arial', size: 22, bold: true, color: C_AZUL_MED },
+          paragraph: { spacing: { before: 120, after: 40 }, outlineLevel: 2 } },
+      ]
+    },
+    numbering: {
+      config: [{
+        reference: 'bullets',
+        levels: [{ level: 0, format: LevelFormat.BULLET, text: '\u2022', alignment: AlignmentType.LEFT,
+          style: { paragraph: { indent: { left: 720, hanging: 360 } } } }]
+      }]
+    },
+    sections: [{
+      properties: pageProps(),
+      headers: { default: header },
+      footers: { default: footer },
+      children: capaContent
+    }]
+  });
+
+  return await Packer.toBuffer(doc);
+}

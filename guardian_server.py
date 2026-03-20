@@ -2031,22 +2031,42 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if out_dir: shutil.rmtree(out_dir, ignore_errors=True)
 
         elif self.path == '/generate':
-            # Recebe JSON → gera DOCX via python-docx puro (sem LibreOffice)
-            if not _DOCX_AVAILABLE:
-                self._error('python-docx não disponível no servidor. Verifique requirements.txt.')
-                return
+            # Recebe JSON → gera DOCX via docx-js (Node.js)
             length = int(self.headers.get('Content-Length', 0))
             body   = self.rfile.read(length)
             try:
                 data = json.loads(body)
 
-                # Carregar imagens Toledo do builder HTML
-                imgs        = extract_imgs_from_builder()
-                toledo_logo = imgs.get('logo_toledo_real', b'')
-                guardian_bn = imgs.get('guardian_capa',    b'')
+                # Adicionar logo PRIX ao payload
+                data['prixLogoB64'] = 'data:image/png;base64,' + PRIX_LOGO_B64
 
-                # Gerar DOCX puro
-                docx_bytes = build_docx_pure(data, toledo_logo, guardian_bn)
+                # Adicionar imagens Guardian ao payload (se não vieram do browser)
+                if not data.get('guardianImgs'):
+                    imgs = extract_imgs_from_builder()
+                    guardian_bn_bytes = imgs.get('guardian_capa', b'')
+                    if guardian_bn_bytes:
+                        import base64 as _b64
+                        data['guardianImgs'] = {
+                            'guardian_capa': 'data:image/jpeg;base64,' + _b64.b64encode(guardian_bn_bytes).decode()
+                        }
+
+                # Gerar DOCX via Node.js (docx-js)
+                js_path = HERE / 'generate_docx.js'
+                if not js_path.exists():
+                    raise FileNotFoundError('generate_docx.js não encontrado em ' + str(js_path))
+
+                import subprocess as _sp
+                result = _sp.run(
+                    ['node', str(js_path)],
+                    input=json.dumps(data, ensure_ascii=False).encode('utf-8'),
+                    capture_output=True, timeout=60
+                )
+                if result.returncode != 0:
+                    err = result.stderr.decode('utf-8', errors='replace')
+                    print(f'  [ERRO] generate_docx.js: {err[:500]}')
+                    raise RuntimeError('Falha no gerador Node.js: ' + err[:200])
+
+                docx_bytes = result.stdout
 
                 self.send_response(200)
                 self.send_header('Content-Type',

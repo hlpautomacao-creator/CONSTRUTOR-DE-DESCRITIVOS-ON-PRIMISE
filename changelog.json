@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.19",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "ajuste no docx",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.18",
     "data": "2026-03-20",
     "categoria": "Manutencao",
