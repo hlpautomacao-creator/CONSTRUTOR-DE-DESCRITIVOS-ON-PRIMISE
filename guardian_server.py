@@ -674,85 +674,104 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     else: pPr_s.append(pBdr_s)
 
     # ── CAPA ──────────────────────────────────────────────────────────────────
-    # Banner
+    # Banner Guardian (imagem de capa)
     if guardian_banner:
-        p = doc.add_paragraph(); _spacing(p, 0, 120)
+        p = doc.add_paragraph(); _spacing(p, 0, 80)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.add_run().add_picture(io.BytesIO(guardian_banner),
                                  width=Cm(18.43), height=Cm(7.72))
 
-    # Título
-    p = doc.add_paragraph(); _spacing(p, 120, 40)
+    # Bloco título com fundo azul escuro — igual ao modelo de referência
+    p = doc.add_paragraph(); _spacing(p, 60, 0)
     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    set_para_shd(p, '1A3A6B')
     r = p.add_run('DESCRITIVO FUNCIONAL')
-    r.font.name='Cambria'; r.font.size=Pt(20)
-    r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
+    r.font.name='Arial Black'; r.font.size=Pt(18)
+    r.font.bold=True; r.font.color.rgb=C_BRANCO
 
-    # Subtítulo
-    p = doc.add_paragraph(); _spacing(p, 0, 100)
+    p = doc.add_paragraph(); _spacing(p, 0, 0)
     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r = p.add_run('GUARDIAN PRO \u2014 Software para Gerenciamento de Operações de Pesagem')
-    r.font.name='Cambria'; r.font.size=Pt(13)
-    r.font.color.rgb=RGBColor(0x22,0x22,0x22)
+    set_para_shd(p, '1A3A6B')
+    r = p.add_run('GUARDIAN PRO — Software para Gerenciamento de Operações de Pesagem')
+    r.font.name='Arial'; r.font.size=Pt(11)
+    r.font.color.rgb=RGBColor(0xCC,0xDD,0xFF)
 
-    # Nome cliente
+    p = doc.add_paragraph(); _spacing(p, 0, 60)
+    set_para_shd(p, '1A3A6B')
+
+    # Nome do cliente em destaque
     cn = (data.get('clientName') or '').upper()
     cc = (data.get('clientCity') or '').upper()
     if cn:
-        p = doc.add_paragraph(); _spacing(p, 60, 20)
+        p = doc.add_paragraph(); _spacing(p, 40, 10)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = p.add_run(cn + (' \u2014 ' + cc if cc else ''))
-        r.font.name='Cambria'; r.font.size=Pt(16)
+        r = p.add_run(cn + (' — ' + cc if cc else ''))
+        r.font.name='Arial Black'; r.font.size=Pt(16)
         r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
 
     cu = data.get('clientUnit','')
     if cu:
-        p = doc.add_paragraph(); _spacing(p, 0, 80)
+        p = doc.add_paragraph(); _spacing(p, 0, 20)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = p.add_run(cu); r.font.name='Cambria'; r.font.size=Pt(13)
+        r = p.add_run(cu)
+        r.font.name='Arial'; r.font.size=Pt(12)
         r.font.color.rgb=RGBColor(0x44,0x44,0x44)
 
-    # Foto da unidade
+    # Filial se houver
+    filial = data.get('clientFilial','')
+    if filial:
+        p = doc.add_paragraph(); _spacing(p, 0, 40)
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run('FILIAL(IS): ' + filial.upper())
+        r.font.name='Arial'; r.font.size=Pt(10)
+        r.font.color.rgb=RGBColor(0x66,0x66,0x66)
+
+    # Foto da unidade do cliente (se fornecida)
     cib64 = data.get('clientImgB64','')
     if cib64:
         try:
             cimg = base64.b64decode(cib64.split('base64,',1)[-1])
-            p = doc.add_paragraph(); _spacing(p, 40, 40)
+            p = doc.add_paragraph(); _spacing(p, 30, 30)
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.add_run().add_picture(io.BytesIO(cimg), width=Cm(14))
+            p.add_run().add_picture(io.BytesIO(cimg), width=Cm(16))
         except: pass
 
-    # Tabela identificação
-    fields = [
-        ('CT / OV Hardware e Serviços', data.get('ctHardware','')),
-        ('Licenciamento Cloud',         data.get('ctCloud','')),
-        ('Filial(is)',                  data.get('clientFilial','')),
-        ('Analista Responsável',        data.get('analystName','')),
-        ('Revisão',                     data.get('docRevision','')),
-        ('Data do Documento',           data.get('docDate','')),
-    ]
-    rows = [(l,v) for l,v in fields if v]
-    if rows:
-        doc.add_paragraph()._p  # espaçador
-        CL, CV = 3600, 4800
-        tbl = doc.add_table(rows=len(rows), cols=2)
-        tbl.style = 'Table Grid'
-        tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
-        _tbl_width(tbl, CL+CV)
-        for ri, (lbl, val) in enumerate(rows):
-            for cell, w, txt, bold in [
-                (tbl.rows[ri].cells[0], CL, lbl, True),
-                (tbl.rows[ri].cells[1], CV, val, False),
-            ]:
-                _cell_shading(cell, 'EDF0F7' if bold else
-                              ('FFFFFF' if ri%2==0 else 'F4F6FB'))
-                _cell_borders(cell); _cell_width(cell, w); _cell_margin(cell)
-                cp = cell.paragraphs[0]; _spacing(cp, 80, 80)
-                run = cp.add_run(txt)
-                run.font.name='Cambria'; run.font.size=Pt(11); run.font.bold=bold
+    # Linha separadora
+    _sep_line(doc, '1A3A6B', 6)
 
-    # URL
-    p = doc.add_paragraph(); _spacing(p, 80, 60)
+    # Tabela de identificação do projeto — 2 colunas, estilo limpo
+    ct_hw    = data.get('ctHardware','')
+    ct_cl    = data.get('ctCloud','')
+    segmento = data.get('clientSegmento','')
+    ident_rows = []
+    if ct_hw or ct_cl:
+        ident_rows.append(('CT / OV Hardware e Serviços', ct_hw, 'CT Licenciamento Cloud', ct_cl))
+    if segmento:
+        ident_rows.append(('Segmento', segmento, 'Analista Responsável', data.get('analystName','')))
+    if ident_rows:
+        p_sp = doc.add_paragraph(); _spacing(p_sp, 40, 20)
+        W4 = CONTENT_W // 4
+        tbl2 = doc.add_table(rows=len(ident_rows), cols=4)
+        tbl2.style = 'Table Grid'
+        tbl2.alignment = WD_TABLE_ALIGNMENT.CENTER
+        _tbl_width(tbl2, CONTENT_W)
+        for ri, (l1,v1,l2,v2) in enumerate(ident_rows):
+            for ci,(cell,w,txt,is_hdr) in enumerate([
+                (tbl2.rows[ri].cells[0], W4, l1, True),
+                (tbl2.rows[ri].cells[1], W4, v1, False),
+                (tbl2.rows[ri].cells[2], W4, l2, True),
+                (tbl2.rows[ri].cells[3], W4, v2, False),
+            ]):
+                _cell_shading(cell, 'DCE6F1' if is_hdr else 'FFFFFF')
+                _cell_borders(cell); _cell_width(cell, w); _cell_margin(cell)
+                cp = cell.paragraphs[0]; _spacing(cp, 60, 60)
+                rr = cp.add_run(txt)
+                rr.font.name='Arial'; rr.font.size=Pt(9)
+                rr.font.bold=is_hdr
+                if is_hdr: rr.font.color.rgb=C_AZUL_ESCURO
+
+    # URL Toledo
+    p = doc.add_paragraph(); _spacing(p, 60, 40)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     _add_hyperlink(p, 'www.toledobrasil.com/produto/guardian',
                    'http://www.toledobrasil.com/produto/guardian')
@@ -760,11 +779,81 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     _sep_line(doc, '1A3A6B', 8)
     _page_break(doc)
 
+    # ── PÁGINA 2: INFORMAÇÕES DO DOCUMENTO ────────────────────────────────────
+    # Título da seção
+    p = doc.add_paragraph(); _spacing(p, 0, 100)
+    set_para_shd(p, '1A3A6B')
+    r = p.add_run('Informações do Documento')
+    r.font.name='Arial Black'; r.font.size=Pt(13)
+    r.font.bold=True; r.font.color.rgb=C_BRANCO
+
+    doc_filename = f"Descritivo Funcional_GuardianPRO_{data.get('clientName','NomeCliente')}_{data.get('docRevision','Rev00')}"
+    info_rows = [
+        ('Título do Documento', 'Descritivo Funcional'),
+        ('Autor',               data.get('analystName','') or '—'),
+        ('Nome do Arquivo',     doc_filename),
+    ]
+    CL2, CV2 = 4000, 7600
+    tbl_info = doc.add_table(rows=len(info_rows), cols=2)
+    tbl_info.style = 'Table Grid'
+    tbl_info.alignment = WD_TABLE_ALIGNMENT.LEFT
+    _tbl_width(tbl_info, CL2+CV2)
+    for ri,(lbl,val) in enumerate(info_rows):
+        for cell,w,txt,bold in [
+            (tbl_info.rows[ri].cells[0], CL2, lbl, True),
+            (tbl_info.rows[ri].cells[1], CV2, val, False),
+        ]:
+            _cell_shading(cell, 'DCE6F1' if bold else ('FFFFFF' if ri%2==0 else 'F4F6FB'))
+            _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
+            cp = cell.paragraphs[0]; _spacing(cp, 80, 80)
+            rr = cp.add_run(txt)
+            rr.font.name='Arial'; rr.font.size=Pt(10); rr.font.bold=bold
+            if bold: rr.font.color.rgb=C_AZUL_ESCURO
+
+    doc.add_paragraph()  # espaçador
+
+    # ── HISTÓRICO DE REVISÕES ─────────────────────────────────────────────────
+    p = doc.add_paragraph(); _spacing(p, 60, 100)
+    set_para_shd(p, '1A3A6B')
+    r = p.add_run('Histórico de Revisões')
+    r.font.name='Arial Black'; r.font.size=Pt(13)
+    r.font.bold=True; r.font.color.rgb=C_BRANCO
+
+    rev_data  = data.get('docDate','') or '—'
+    rev_num   = data.get('docRevision','Rev00') or 'Rev00'
+    rev_desc  = data.get('revDesc','Geração do documento') or 'Geração do documento'
+    rev_autor = data.get('analystName','') or '—'
+
+    rev_headers = ['Data', 'Rev.', 'Descrição', 'Autor']
+    rev_widths  = [1800, 1200, 6000, 2600]
+    tbl_rev = doc.add_table(rows=2, cols=4)
+    tbl_rev.style = 'Table Grid'
+    tbl_rev.alignment = WD_TABLE_ALIGNMENT.LEFT
+    _tbl_width(tbl_rev, sum(rev_widths))
+    # Cabeçalho
+    for ci,(cell,hdr,w) in enumerate(zip(tbl_rev.rows[0].cells, rev_headers, rev_widths)):
+        _cell_shading(cell,'1A3A6B'); _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
+        cp=cell.paragraphs[0]; _spacing(cp,60,60)
+        rr=cp.add_run(hdr); rr.font.name='Arial'; rr.font.size=Pt(10)
+        rr.font.bold=True; rr.font.color.rgb=C_BRANCO
+    # Linha de revisão
+    for ci,(cell,val,w) in enumerate(zip(tbl_rev.rows[1].cells,
+                                          [rev_data, rev_num, rev_desc, rev_autor],
+                                          rev_widths)):
+        _cell_shading(cell,'FFFFFF'); _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
+        cp=cell.paragraphs[0]; _spacing(cp,60,60)
+        rr=cp.add_run(str(val)); rr.font.name='Arial'; rr.font.size=Pt(10)
+
+    _sep_line(doc, '1A3A6B', 6)
+    _page_break(doc)
+
     # ── ÍNDICE ────────────────────────────────────────────────────────────────
     p = doc.add_paragraph(); _spacing(p, 0, 80)
+    set_para_shd(p, '1A3A6B')
     r = p.add_run('Índice')
     r.font.name='Arial Black'; r.font.size=Pt(14)
-    r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
+    r.font.bold=True; r.font.color.rgb=C_BRANCO
+    doc.add_paragraph()
     _add_toc(doc)
     _page_break(doc)
 
@@ -885,26 +974,32 @@ def set_para_shd(para, hex_color):
 def add_h1(doc, text):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p.paragraph_format.space_before = Pt(10)
-    p.paragraph_format.space_after  = Pt(5)
+    p.paragraph_format.space_before = Pt(14)
+    p.paragraph_format.space_after  = Pt(6)
     set_para_shd(p, '1A3A6B')
     r = p.add_run(text)
     r.font.name='Arial Black'; r.font.size=Pt(13)
     r.font.bold=True; r.font.color.rgb=C_BRANCO
+    # Padding via left indent
+    pPr = p._p.get_or_add_pPr()
+    ind = OxmlElement('w:ind')
+    ind.set(qn('w:left'), '120')
+    pPr.append(ind)
 
 def add_h2(doc, text):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p.paragraph_format.space_before = Pt(8)
+    p.paragraph_format.space_before = Pt(10)
     p.paragraph_format.space_after  = Pt(4)
+    set_para_shd(p, 'DCE6F1')
     r = p.add_run(text)
     r.font.name='Arial Black'; r.font.size=Pt(12)
-    r.font.color.rgb=C_AZUL_MED
+    r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
     pPr = p._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
     bot = OxmlElement('w:bottom')
-    bot.set(qn('w:val'),'single'); bot.set(qn('w:sz'),'4')
-    bot.set(qn('w:space'),'1'); bot.set(qn('w:color'),'2E75B6')
+    bot.set(qn('w:val'),'single'); bot.set(qn('w:sz'),'6')
+    bot.set(qn('w:space'),'1'); bot.set(qn('w:color'),'1A3A6B')
     pBdr.append(bot); pPr.append(pBdr)
 
 def add_h3(doc, text):
@@ -937,8 +1032,10 @@ def make_table(doc, headers, rows, col_widths_cm):
     hrow = tbl.rows[0]
     for i,(cell,h) in enumerate(zip(hrow.cells, headers)):
         cell.width = Cm(col_widths_cm[i])
-        set_cell_bg(cell,'4472C4')
+        set_cell_bg(cell,'1A3A6B')
         p = cell.paragraphs[0]
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after  = Pt(3)
         r = p.add_run(str(h))
         r.font.name='Arial'; r.font.size=Pt(10)
         r.font.bold=True; r.font.color.rgb=C_BRANCO

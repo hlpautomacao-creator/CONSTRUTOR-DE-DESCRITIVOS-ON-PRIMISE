@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.15",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "Ajuste no documento .docx gerado ao final do preenchimento do projeto",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.14",
     "data": "2026-03-20",
     "categoria": "Melhoria",
