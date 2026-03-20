@@ -33,6 +33,7 @@ services:
     volumes:
       - ./guardian_server.py:/app/guardian_server.py
       - ./builder-descritivo.html:/app/builder-descritivo.html
+      - ./changelog.json:/app/changelog.json
 
 volumes:
   guardian_pgdata:

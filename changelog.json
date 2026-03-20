@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.7",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "corrigindo funcao do changelog",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.6",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",
