@@ -12,7 +12,7 @@ const {
   HorizontalPositionAlign, HorizontalPositionRelativeFrom,
   VerticalPositionAlign, VerticalPositionRelativeFrom,
   TextWrappingType, TextWrappingSide,
-  PageNumberElement, PageNumberType
+  PageNumberElement
 } = require('docx');
 const fs = require('fs');
 const path = require('path');
@@ -300,7 +300,7 @@ function buildFooter(docTitle) {
         new TextRun({ text: (docTitle || '').slice(0, 65), font: 'Arial', size: 16, color: '666666' }),
         new TextRun({ text: '\t', font: 'Arial', size: 16 }),
         new TextRun({ text: 'Página ', font: 'Arial', size: 16, color: '666666' }),
-        new PageNumberElement({ font: 'Arial', size: 16, color: '666666', type: PageNumberType.CURRENT }),
+        new TextRun({ children: [new PageNumberElement({})], font: 'Arial', size: 16, color: '666666' }),
       ]
     })]
   });
