@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: guardian_db
+    restart: always
+    environment:
+      POSTGRES_DB:       guardian_pro
+      POSTGRES_USER:     guardian_user
+      POSTGRES_PASSWORD: GuardianToledo2025!
+    volumes:
+      - guardian_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardian_user -d guardian_pro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  servidor:
+    build: .
+    container_name: guardian_servidor
+    restart: always
+    ports:
+      - "5555:5555"
+    environment:
+      PORT:         5555
+      DATABASE_URL: postgresql://guardian_user:GuardianToledo2025!@db:5432/guardian_pro
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./guardian_server.py:/app/guardian_server.py
+      - ./builder-descritivo.html:/app/builder-descritivo.html
+
+volumes:
+  guardian_pgdata:
+    driver: local
+```
+
+---
+
+**Arquivo 3 — salvar como `.gitignore`**
+```
+__pycache__/
+*.pyc
+*.pyo
+.env
