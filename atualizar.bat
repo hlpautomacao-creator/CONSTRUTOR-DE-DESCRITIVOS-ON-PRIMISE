@@ -26,15 +26,65 @@ echo  Arquivos alterados:
 git status --short
 echo.
 
-:: Pedir descricao
+:: ── Preencher informacoes do changelog ─────────────────────────
+echo  Preencha as informacoes para o changelog:
+echo  (Pressione ENTER para usar o valor padrao entre colchetes)
+echo.
+
+:: Versao
+set /p VERSAO=  Versao [ex: v1.0.1]: 
+if "%VERSAO%"=="" set VERSAO=v1.0.0
+
+:: Categoria
+echo.
+echo  Categorias disponiveis:
+echo    1 - Novo recurso
+echo    2 - Melhoria
+echo    3 - Correcao de bug
+echo    4 - Manutencao
+echo.
+set /p CAT_NUM=  Escolha a categoria [1-4]: 
+
+if "%CAT_NUM%"=="1" set CATEGORIA=Novo recurso
+if "%CAT_NUM%"=="2" set CATEGORIA=Melhoria
+if "%CAT_NUM%"=="3" set CATEGORIA=Correcao de bug
+if "%CAT_NUM%"=="4" set CATEGORIA=Manutencao
+if not defined CATEGORIA set CATEGORIA=Melhoria
+
+:: Descricao
+echo.
 set /p DESCRICAO=  Descreva o que foi alterado: 
-if "%DESCRICAO%"=="" set DESCRICAO=atualizacao
+if "%DESCRICAO%"=="" set DESCRICAO=Atualizacao sem descricao
+
+:: Responsavel
+echo.
+set /p RESPONSAVEL=  Seu nome [deixe vazio para usar o do Git]: 
+
+:: Montar mensagem de commit formatada
+set COMMIT_MSG=[%VERSAO%] [%CATEGORIA%] %DESCRICAO%
+if not "%RESPONSAVEL%"=="" set COMMIT_MSG=%COMMIT_MSG% ^| por: %RESPONSAVEL%
+
+echo.
+echo  ── Resumo ──────────────────────────────────────────
+echo   Versao:     %VERSAO%
+echo   Categoria:  %CATEGORIA%
+echo   Descricao:  %DESCRICAO%
+if not "%RESPONSAVEL%"=="" echo   Responsavel: %RESPONSAVEL%
+echo  ────────────────────────────────────────────────────
+echo.
+
+set /p CONFIRMA=  Confirmar e enviar? [S/N]: 
+if /i not "%CONFIRMA%"=="S" (
+    echo  Cancelado.
+    pause
+    exit /b 0
+)
 
 :: Enviar para o GitHub
 echo.
 echo  Enviando para o GitHub...
 git add .
-git commit -m "%DESCRICAO%"
+git commit -m "%COMMIT_MSG%"
 git push
 
 if %errorlevel% neq 0 (

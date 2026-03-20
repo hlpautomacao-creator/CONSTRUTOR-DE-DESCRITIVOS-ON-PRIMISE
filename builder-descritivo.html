@@ -251,6 +251,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
     <button class="btn btn-ghost btn-sm" onclick="clearAll()" title="Limpa apenas a seção atual">Limpar seção</button> <button class="btn btn-danger btn-sm" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="resetarTudo()" title="Apaga todo o projeto e começa do zero">↺ Novo projeto</button>
     <button class="btn btn-ghost btn-sm" id="btnAdmin" onclick="openAdmin()" style="border-color:var(--warn);color:var(--warn)">⚙ Admin</button>
     <button class="btn" onclick="openHistorico()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.5);color:#fff;font-weight:600;border-radius:var(--r)">📋 Histórico</button>
+    <button class="btn" onclick="openChangelog()" style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.4);color:#fff;font-weight:600;border-radius:var(--r)">📝 Changelog</button>
     <div style="display:inline-flex;border-radius:var(--r);overflow:hidden;gap:1px;background:rgba(255,255,255,.15)">
       <button class="btn btn-primary" style="border-radius:0;flex:1" onclick="generateDoc('docx')">⬇ Gerar Descritivo .docx</button>
       <button class="btn btn-primary" style="border-radius:0;padding:0 10px;font-size:11px;opacity:.7" onclick="generateDoc('mht')" title="Versão MHT offline">MHT</button>
@@ -3056,6 +3057,23 @@ if(hpl) hpl.innerHTML='<span style="color:var(--text3);font-size:12px">Selecione
   </div>
 </div>
 
+<!-- ── Changelog Modal ───────────────────────────────────────── -->
+<div id="changelogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1200;overflow-y:auto;padding:24px 16px">
+  <div style="max-width:760px;margin:0 auto;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow:hidden">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="width:32px;height:32px;background:var(--primary);border-radius:6px;display:grid;place-items:center;font-size:16px">📝</div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:15px">Changelog — Construtor de Descritivo Funcional</div>
+        <div style="font-size:12px;color:var(--text3)">Histórico de versões e alterações</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="closeChangelog()">✕ Fechar</button>
+    </div>
+    <div id="changelogBody" style="padding:24px;max-height:70vh;overflow-y:auto">
+      <div style="text-align:center;color:var(--text3);padding:40px">Carregando changelog…</div>
+    </div>
+  </div>
+</div>
+
 <script>
 var _histTimer = null;
 var _histProjetos = [];
@@ -3386,6 +3404,68 @@ function applyPayload(p){
     if(typeof updateHeader === 'function') updateHeader();
     if(typeof buildPreview === 'function') buildPreview();
   }, 150);
+}
+
+function openChangelog(){
+  var ov = document.getElementById('changelogOverlay');
+  ov.style.display = 'block';
+  ov.onclick = function(e){ if(e.target===ov) closeChangelog(); };
+  renderChangelog();
+}
+
+function closeChangelog(){
+  document.getElementById('changelogOverlay').style.display = 'none';
+}
+
+function renderChangelog(){
+  var body = document.getElementById('changelogBody');
+  body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Carregando…</div>';
+  var base = window.SERVER_URL || (window.location.origin === 'null' ? 'http://localhost:5555' : window.location.origin);
+  fetch(base + '/changelog')
+    .then(function(r){ return r.json(); })
+    .then(function(entries){
+      if(!entries || !entries.length){
+        body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Nenhuma entrada no changelog ainda.</div>';
+        return;
+      }
+      var catColors = {
+        'Novo recurso':  {bg:'rgba(0,180,100,.15)',  border:'rgba(0,180,100,.4)',  text:'#00b464'},
+        'Melhoria':      {bg:'rgba(0,120,255,.15)',  border:'rgba(0,120,255,.4)',  text:'#4d9fff'},
+        'Correcao de bug':{bg:'rgba(255,80,80,.15)', border:'rgba(255,80,80,.4)', text:'#ff6060'},
+        'Manutencao':    {bg:'rgba(160,160,160,.15)',border:'rgba(160,160,160,.4)',text:'#aaa'}
+      };
+      // Agrupar por versão
+      var byVersion = {};
+      entries.forEach(function(e){
+        if(!byVersion[e.versao]) byVersion[e.versao] = {data: e.data, items: []};
+        byVersion[e.versao].items.push(e);
+      });
+      var html = '';
+      Object.keys(byVersion).forEach(function(v){
+        var vData = byVersion[v];
+        html += '<div style="margin-bottom:28px">';
+        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+        html += '<span style="font-size:16px;font-weight:700;color:var(--text)">' + v + '</span>';
+        html += '<span style="font-size:12px;color:var(--text3)">' + (vData.data || '') + '</span>';
+        html += '<div style="flex:1;height:1px;background:var(--border)"></div>';
+        html += '</div>';
+        vData.items.forEach(function(item){
+          var c = catColors[item.categoria] || catColors['Manutencao'];
+          html += '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;padding:10px 12px;background:var(--bg2);border-radius:8px;border-left:3px solid ' + c.border + '">';
+          html += '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:' + c.bg + ';color:' + c.text + ';border:1px solid ' + c.border + ';white-space:nowrap;margin-top:1px">' + item.categoria + '</span>';
+          html += '<div style="flex:1">';
+          html += '<div style="font-size:13px;color:var(--text)">' + item.descricao + '</div>';
+          if(item.responsavel) html += '<div style="font-size:11px;color:var(--text3);margin-top:3px">por ' + item.responsavel + '</div>';
+          html += '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    })
+    .catch(function(){
+      body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Não foi possível carregar o changelog.<br><small>Verifique se o arquivo changelog.json está na pasta do projeto.</small></div>';
+    });
 }
 
 function histExcluir(id, btn){

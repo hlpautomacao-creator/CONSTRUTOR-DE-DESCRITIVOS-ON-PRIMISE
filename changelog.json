@@ -1,0 +1,72 @@
+[
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Historico passa a restaurar projeto completo ao clonar (PCs, fluxos, modulos, filas, patios, ERP e operacoes)",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Corrige duplicacao de PCs na secao de Operacoes ao clonar projeto do historico",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Novo recurso",
+    "descricao": "Botao Limpar Secao: limpa apenas a secao atual sem apagar o restante do projeto",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Novo recurso",
+    "descricao": "Botao Novo Projeto: reseta todo o preenchimento para iniciar um projeto do zero",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.3",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Dropdown de filas e patios agora exibe apenas as operacoes marcadas para cada PC, nao mais todas as opcoes do tipo",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.3",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Dropdowns de filas e patios atualizam automaticamente ao marcar ou desmarcar operacoes nos PCs",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.2",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Corrige botao Gerar Descritivo que estava gerando arquivo .mht em vez de .docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.2",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Corrige conexao SSL com PostgreSQL local (sslmode disable para instancia local)",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.1",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Renomeia aplicacao de Guardian PRO Builder para Construtor de Descritivo Funcional",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.0",
+    "data": "2026-03-20",
+    "categoria": "Novo recurso",
+    "descricao": "Primeiro deploy local com Docker — servidor Python + PostgreSQL em containers",
+    "responsavel": "Patrik"
+  }
+]

@@ -1841,6 +1841,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
 
+        # ── Changelog ─────────────────────────────────────────────
+        elif path == '/changelog':
+            changelog_file = HERE / 'changelog.json'
+            if changelog_file.exists():
+                try:
+                    data = changelog_file.read_bytes()
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.send_header('Content-Length', len(data))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(data)
+                except Exception as e:
+                    self._error(str(e))
+            else:
+                body = b'[]'
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', len(body))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(body)
+
         # ── Status do banco de dados ───────────────────────────────
         elif path == '/db-status':
             db_url = os.environ.get('DATABASE_URL', '')
