@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Guardian PRO — Servidor de Geração de Descritivo
+Construtor de Descritivo Funcional — Servidor de Geração de Descritivo
 Uso: python guardian_server.py  (ou duplo clique em iniciar_servidor.bat)
 Requer: python-docx  (pip install python-docx)
 """
@@ -1890,7 +1890,7 @@ if __name__ == '__main__':
     import socketserver
 
     print()
-    print('  Guardian PRO — Servidor de Geração iniciando...')
+    print('  Construtor de Descritivo Funcional — Servidor iniciando...')
     print(f'  Porta: {PORT}')
     print(f'  builder.html: {"OK" if BUILDER_HTML.exists() else "NAO ENCONTRADO"}')
     db_url = os.environ.get('DATABASE_URL', '')
