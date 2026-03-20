@@ -3482,6 +3482,70 @@ function applyPayload(p){
   var elObs=document.getElementById('obsFinais');
   if(elObs && p.obsFinais) elObs.value=p.obsFinais;
 }
+function openChangelog(){
+  var ov = document.getElementById('changelogOverlay');
+  if(!ov) return;
+  ov.style.display = 'block';
+  ov.onclick = function(e){ if(e.target===ov) closeChangelog(); };
+  renderChangelog();
+}
+
+function closeChangelog(){
+  var ov = document.getElementById('changelogOverlay');
+  if(ov) ov.style.display = 'none';
+}
+
+function renderChangelog(){
+  var body = document.getElementById('changelogBody');
+  if(!body) return;
+  body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Carregando…</div>';
+  var base = window.SERVER_URL || (window.location.origin === 'null' ? 'http://localhost:5555' : window.location.origin);
+  fetch(base + '/changelog')
+    .then(function(r){ return r.json(); })
+    .then(function(entries){
+      if(!entries || !entries.length){
+        body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Nenhuma entrada no changelog ainda.</div>';
+        return;
+      }
+      var catColors = {
+        'Novo recurso':   {bg:'rgba(0,180,100,.15)',  border:'rgba(0,180,100,.4)',  text:'#00b464'},
+        'Melhoria':       {bg:'rgba(0,120,255,.15)',  border:'rgba(0,120,255,.4)',  text:'#4d9fff'},
+        'Correcao de bug':{bg:'rgba(255,80,80,.15)',  border:'rgba(255,80,80,.4)',  text:'#ff6060'},
+        'Correcao':       {bg:'rgba(255,80,80,.15)',  border:'rgba(255,80,80,.4)',  text:'#ff6060'},
+        'Manutencao':     {bg:'rgba(160,160,160,.15)',border:'rgba(160,160,160,.4)',text:'#aaa'}
+      };
+      var byVersion = {};
+      entries.forEach(function(e){
+        if(!byVersion[e.versao]) byVersion[e.versao] = {data:e.data, items:[]};
+        byVersion[e.versao].items.push(e);
+      });
+      var html = '';
+      Object.keys(byVersion).forEach(function(v){
+        var vData = byVersion[v];
+        html += '<div style="margin-bottom:28px">';
+        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+        html += '<span style="font-size:16px;font-weight:700;color:var(--text)">'+v+'</span>';
+        html += '<span style="font-size:12px;color:var(--text3)">'+(vData.data||'')+'</span>';
+        html += '<div style="flex:1;height:1px;background:var(--border)"></div>';
+        html += '</div>';
+        vData.items.forEach(function(item){
+          var c = catColors[item.categoria]||catColors['Manutencao'];
+          html += '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;padding:10px 12px;background:var(--bg2,var(--surface2));border-radius:8px;border-left:3px solid '+c.border+'">';
+          html += '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:'+c.bg+';color:'+c.text+';border:1px solid '+c.border+';white-space:nowrap;margin-top:1px">'+item.categoria+'</span>';
+          html += '<div style="flex:1">';
+          html += '<div style="font-size:13px;color:var(--text)">'+item.descricao+'</div>';
+          if(item.responsavel) html += '<div style="font-size:11px;color:var(--text3);margin-top:3px">por '+item.responsavel+'</div>';
+          html += '</div></div>';
+        });
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    })
+    .catch(function(){
+      body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Não foi possível carregar o changelog.<br><small>Verifique se o servidor está rodando e se changelog.json está na pasta.</small></div>';
+    });
+}
+
 function histExcluir(id, btn){
   if(!confirm('Excluir este projeto do histórico? Esta ação não pode ser desfeita.')) return;
   var base = (window.SERVER_URL || (window.location.origin === 'null' ? 'http://localhost:5555' : window.location.origin));

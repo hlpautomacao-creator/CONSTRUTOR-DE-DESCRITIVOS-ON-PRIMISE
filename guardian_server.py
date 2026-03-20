@@ -657,9 +657,14 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
 
     pr = cr.paragraphs[0]
     pr.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    # Forçar alinhamento direita via XML (garante no Word)
+    pPr_r = pr._p.get_or_add_pPr()
+    jc_r  = OxmlElement('w:jc')
+    jc_r.set(qn('w:val'), 'right')
+    pPr_r.append(jc_r)
     if toledo_logo:
         pr.add_run().add_picture(io.BytesIO(toledo_logo),
-                                  width=Cm(4.86), height=Cm(2.04))
+                                  width=Cm(4.0))
 
     # Linha separadora no header (sem spacing para evitar erro de schema)
     p_sep = hdr.add_paragraph()
@@ -674,39 +679,35 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     else: pPr_s.append(pBdr_s)
 
     # ── CAPA ──────────────────────────────────────────────────────────────────
-    # Banner Guardian (imagem de capa)
+    # Banner Guardian
     if guardian_banner:
         p = doc.add_paragraph(); _spacing(p, 0, 80)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.add_run().add_picture(io.BytesIO(guardian_banner),
                                  width=Cm(18.43), height=Cm(7.72))
 
-    # Bloco título com fundo azul escuro — igual ao modelo de referência
-    p = doc.add_paragraph(); _spacing(p, 60, 0)
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    set_para_shd(p, '1A3A6B')
+    # Título DESCRITIVO FUNCIONAL
+    p = doc.add_paragraph(); _spacing(p, 120, 40)
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run('DESCRITIVO FUNCIONAL')
-    r.font.name='Arial Black'; r.font.size=Pt(18)
-    r.font.bold=True; r.font.color.rgb=C_BRANCO
+    r.font.name='Cambria'; r.font.size=Pt(20)
+    r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
 
-    p = doc.add_paragraph(); _spacing(p, 0, 0)
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    set_para_shd(p, '1A3A6B')
+    # Subtítulo
+    p = doc.add_paragraph(); _spacing(p, 0, 100)
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run('GUARDIAN PRO — Software para Gerenciamento de Operações de Pesagem')
-    r.font.name='Arial'; r.font.size=Pt(11)
-    r.font.color.rgb=RGBColor(0xCC,0xDD,0xFF)
-
-    p = doc.add_paragraph(); _spacing(p, 0, 60)
-    set_para_shd(p, '1A3A6B')
+    r.font.name='Cambria'; r.font.size=Pt(13)
+    r.font.color.rgb=RGBColor(0x22,0x22,0x22)
 
     # Nome do cliente em destaque
     cn = (data.get('clientName') or '').upper()
     cc = (data.get('clientCity') or '').upper()
     if cn:
-        p = doc.add_paragraph(); _spacing(p, 40, 10)
+        p = doc.add_paragraph(); _spacing(p, 60, 20)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r = p.add_run(cn + (' — ' + cc if cc else ''))
-        r.font.name='Arial Black'; r.font.size=Pt(16)
+        r.font.name='Cambria'; r.font.size=Pt(16)
         r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
 
     cu = data.get('clientUnit','')
@@ -714,64 +715,58 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
         p = doc.add_paragraph(); _spacing(p, 0, 20)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r = p.add_run(cu)
-        r.font.name='Arial'; r.font.size=Pt(12)
+        r.font.name='Cambria'; r.font.size=Pt(13)
         r.font.color.rgb=RGBColor(0x44,0x44,0x44)
-
-    # Filial se houver
-    filial = data.get('clientFilial','')
-    if filial:
-        p = doc.add_paragraph(); _spacing(p, 0, 40)
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = p.add_run('FILIAL(IS): ' + filial.upper())
-        r.font.name='Arial'; r.font.size=Pt(10)
-        r.font.color.rgb=RGBColor(0x66,0x66,0x66)
 
     # Foto da unidade do cliente (se fornecida)
     cib64 = data.get('clientImgB64','')
     if cib64:
         try:
             cimg = base64.b64decode(cib64.split('base64,',1)[-1])
-            p = doc.add_paragraph(); _spacing(p, 30, 30)
+            p = doc.add_paragraph(); _spacing(p, 40, 40)
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.add_run().add_picture(io.BytesIO(cimg), width=Cm(16))
+            p.add_run().add_picture(io.BytesIO(cimg), width=Cm(15))
         except: pass
 
-    # Linha separadora
-    _sep_line(doc, '1A3A6B', 6)
-
-    # Tabela de identificação do projeto — 2 colunas, estilo limpo
+    # Tabela identificação — layout do modelo: FAZENDA | CT/OV | CT CLOUD
     ct_hw    = data.get('ctHardware','')
     ct_cl    = data.get('ctCloud','')
+    filial   = data.get('clientFilial','')
     segmento = data.get('clientSegmento','')
-    ident_rows = []
-    if ct_hw or ct_cl:
-        ident_rows.append(('CT / OV Hardware e Serviços', ct_hw, 'CT Licenciamento Cloud', ct_cl))
-    if segmento:
-        ident_rows.append(('Segmento', segmento, 'Analista Responsável', data.get('analystName','')))
-    if ident_rows:
-        p_sp = doc.add_paragraph(); _spacing(p_sp, 40, 20)
-        W4 = CONTENT_W // 4
-        tbl2 = doc.add_table(rows=len(ident_rows), cols=4)
-        tbl2.style = 'Table Grid'
-        tbl2.alignment = WD_TABLE_ALIGNMENT.CENTER
-        _tbl_width(tbl2, CONTENT_W)
-        for ri, (l1,v1,l2,v2) in enumerate(ident_rows):
-            for ci,(cell,w,txt,is_hdr) in enumerate([
-                (tbl2.rows[ri].cells[0], W4, l1, True),
-                (tbl2.rows[ri].cells[1], W4, v1, False),
-                (tbl2.rows[ri].cells[2], W4, l2, True),
-                (tbl2.rows[ri].cells[3], W4, v2, False),
-            ]):
-                _cell_shading(cell, 'DCE6F1' if is_hdr else 'FFFFFF')
-                _cell_borders(cell); _cell_width(cell, w); _cell_margin(cell)
-                cp = cell.paragraphs[0]; _spacing(cp, 60, 60)
-                rr = cp.add_run(txt)
-                rr.font.name='Arial'; rr.font.size=Pt(9)
-                rr.font.bold=is_hdr
-                if is_hdr: rr.font.color.rgb=C_AZUL_ESCURO
 
-    # URL Toledo
-    p = doc.add_paragraph(); _spacing(p, 60, 40)
+    p_sp = doc.add_paragraph(); _spacing(p_sp, 60, 20)
+    W3 = CONTENT_W // 3
+    tbl_id = doc.add_table(rows=2, cols=3)
+    tbl_id.style = 'Table Grid'
+    tbl_id.alignment = WD_TABLE_ALIGNMENT.CENTER
+    _tbl_width(tbl_id, CONTENT_W)
+    # Cabeçalho da tabela
+    hdrs = ['FAZENDA / UNIDADE', 'CT/OV HARDWARE E SERVIÇOS', 'CT CLOUD']
+    vals = [cn + (' / ' + cu if cu else ''), ct_hw or '—', ct_cl or '—']
+    for ri, (row_data, bg) in enumerate([(hdrs,'1A3A6B'),(vals,'FFFFFF')]):
+        for ci, (cell, txt) in enumerate(zip(tbl_id.rows[ri].cells, row_data)):
+            _cell_shading(cell, bg)
+            _cell_borders(cell); _cell_width(cell, W3); _cell_margin(cell)
+            cp = cell.paragraphs[0]; _spacing(cp, 80, 80)
+            cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            rr = cp.add_run(txt)
+            rr.font.name='Cambria'; rr.font.size=Pt(10)
+            rr.font.bold=(ri==0)
+            rr.font.color.rgb=C_BRANCO if ri==0 else RGBColor(0x22,0x22,0x22)
+
+    # Filial e segmento
+    info_parts = []
+    if filial: info_parts.append('FILIAL(IS): ' + filial.upper())
+    if segmento: info_parts.append('SEGMENTO: ' + segmento.upper())
+    if info_parts:
+        p = doc.add_paragraph(); _spacing(p, 30, 20)
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run('   |   '.join(info_parts))
+        r.font.name='Cambria'; r.font.size=Pt(10)
+        r.font.color.rgb=RGBColor(0x44,0x44,0x44)
+
+    # URL
+    p = doc.add_paragraph(); _spacing(p, 40, 60)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     _add_hyperlink(p, 'www.toledobrasil.com/produto/guardian',
                    'http://www.toledobrasil.com/produto/guardian')
