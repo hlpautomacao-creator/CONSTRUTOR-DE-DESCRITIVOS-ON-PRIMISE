@@ -248,7 +248,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost btn-sm" onclick="loadExample()">Carregar Exemplo</button>
-    <button class="btn btn-ghost btn-sm" onclick="clearAll()">Limpar</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearAll()" title="Limpa apenas a seção atual">Limpar seção</button> <button class="btn btn-danger btn-sm" style="background:var(--danger);color:#fff;border-color:var(--danger)" onclick="resetarTudo()" title="Apaga todo o projeto e começa do zero">↺ Novo projeto</button>
     <button class="btn btn-ghost btn-sm" id="btnAdmin" onclick="openAdmin()" style="border-color:var(--warn);color:var(--warn)">⚙ Admin</button>
     <button class="btn" onclick="openHistorico()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.5);color:#fff;font-weight:600;border-radius:var(--r)">📋 Histórico</button>
     <div style="display:inline-flex;border-radius:var(--r);overflow:hidden;gap:1px;background:rgba(255,255,255,.15)">
@@ -2528,7 +2528,49 @@ function loadExample(){
 }
 
 function clearAll(){
-  if(!confirm('Limpar todos os dados preenchidos?'))return;
+  // Limpa apenas a seção atual
+  var secNames = ['Identificação','Responsáveis','Composição da Solução','Fluxos','Integração ERP','Operações nos PCs','Módulos','Revisão'];
+  if(!confirm('Limpar os dados da seção atual ('+secNames[cur]+')?')) return;
+
+  if(cur===0){
+    ['clientName','clientCity','clientUnit','clientFilial','clientDesc',
+     'ctHardware','ctCloud','analystName','docDate'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.value='';
+    });
+    document.getElementById('docRevision').value='Rev00';
+    document.getElementById('revDesc').value='Geração do documento';
+    updateHeader();
+  } else if(cur===1){
+    document.querySelectorAll('#panel1 input').forEach(function(el){ el.value=''; });
+  } else if(cur===2){
+    pcItems.forEach(id=>document.getElementById('pc_'+id)?.remove()); pcItems=[];
+    swItems.forEach(id=>document.getElementById('sw_'+id)?.remove()); swItems=[];
+    hwItems.forEach(id=>document.getElementById('hw_'+id)?.remove()); hwItems=[];
+    document.getElementById('opPCList').innerHTML='';
+  } else if(cur===3){
+    flxItems.forEach(id=>document.getElementById('fx_'+id)?.remove()); flxItems=[];
+    var el=document.getElementById('flxObs'); if(el) el.value='';
+  } else if(cur===4){
+    ['erpName','erpVendor','erpResp','txtFolder','btSGBD','btBanco','btTabelas'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.value='';
+    });
+  } else if(cur===5){
+    document.getElementById('opPCList').innerHTML='';
+    buildOpPCList();
+    ['op_cad_obs','op_tol_val','op_tiq_campos','op_saida_obs','op_especiais'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.value='';
+    });
+  } else if(cur===6){
+    filaItems.forEach(id=>document.getElementById('fl_'+id)?.remove()); filaItems=[];
+    patioItems.forEach(id=>document.getElementById('pt_'+id)?.remove()); patioItems=[];
+  } else if(cur===7){
+    var el=document.getElementById('obsFinais'); if(el) el.value='';
+  }
+  showToast('Seção limpa','warn');
+}
+
+function resetarTudo(){
+  if(!confirm('⚠ Isso vai apagar TODO o projeto atual e começar do zero.\n\nTem certeza?')) return;
   pcItems.forEach(id=>document.getElementById('pc_'+id)?.remove()); pcItems=[];
   swItems.forEach(id=>document.getElementById('sw_'+id)?.remove()); swItems=[];
   hwItems.forEach(id=>document.getElementById('hw_'+id)?.remove()); hwItems=[];
@@ -2536,13 +2578,25 @@ function clearAll(){
   filaItems.forEach(id=>document.getElementById('fl_'+id)?.remove()); filaItems=[];
   patioItems.forEach(id=>document.getElementById('pt_'+id)?.remove()); patioItems=[];
   document.getElementById('opPCList').innerHTML='';
-  document.getElementById('flxList').innerHTML='';
-  document.querySelectorAll('input[type=text],input[type=date],textarea').forEach(el=>el.value='');
+  var flxList=document.getElementById('flxList'); if(flxList) flxList.innerHTML='';
+  document.querySelectorAll('input[type=text],input[type=date],textarea').forEach(function(el){ el.value=''; });
   document.getElementById('docRevision').value='Rev00';
   document.getElementById('revDesc').value='Geração do documento';
+  // Desativar módulos
+  ['mod_fila','mod_inspecao','mod_tulha','mod_moega','mod_yms','mod_agend',
+   'mod_facil','mod_gw','mod_ad','mod_relatorio','mod_campos'].forEach(function(m){
+    var el=document.getElementById(m);
+    if(el && el.classList.contains('on')) toggleMod(m);
+  });
+  // Manter cloud ativo (padrão)
+  var cloud=document.getElementById('mod_cloud');
+  if(cloud && !cloud.classList.contains('on')) toggleMod('mod_cloud');
   document.getElementById('sec_filas').style.display='none';
   document.getElementById('sec_patios').style.display='none';
-  updateHeader(); showToast('Dados limpos','warn');
+  setERP('ws');
+  goTo(0);
+  updateHeader();
+  showToast('Projeto resetado — pronto para novo preenchimento','warn');
 }
 
 
@@ -3189,25 +3243,7 @@ function applyPayload(p){
     p.pcs.forEach(function(pc){
       addPC(pc.num||'', pc.name||'', pc.tipo||'outro', pc.equip||{}, pc.desc||'', false);
     });
-    // Aguardar renderização e depois aplicar operações marcadas
-    setTimeout(function(){
-      if(p.opsByPC){
-        Object.keys(p.opsByPC).forEach(function(savedId, idx){
-          var realId = pcItems[idx];
-          if(!realId) return;
-          var ops = p.opsByPC[savedId]||[];
-          var card = document.querySelector('.op-pc-card[data-pcid="'+realId+'"]');
-          if(!card) return;
-          card.querySelectorAll('.op-badge').forEach(function(badge){
-            if(ops.indexOf(badge.textContent) >= 0){
-              badge.classList.add('on');
-            } else {
-              badge.classList.remove('on');
-            }
-          });
-        });
-      }
-    }, 100);
+    // operações por PC aplicadas no bloco final de applyPayload
   }
 
   // ── Software ────────────────────────────────────────────────────
@@ -3325,8 +3361,31 @@ function applyPayload(p){
   var elObs = document.getElementById('obsFinais');
   if(elObs && p.obsFinais) elObs.value = p.obsFinais;
 
-  if(typeof updateHeader === 'function') updateHeader();
-  if(typeof buildPreview === 'function') buildPreview();
+  // Forçar buildOpPCList agora para popular o container com os IDs corretos
+  // Isso evita duplicação quando o usuário navegar para a seção 5
+  setTimeout(function(){
+    if(typeof buildOpPCList === 'function') buildOpPCList();
+    // Restaurar operações marcadas por PC
+    if(p.opsByPC){
+      var savedIds = Object.keys(p.opsByPC);
+      savedIds.forEach(function(savedId, idx){
+        var realId = pcItems[idx];
+        if(!realId) return;
+        var ops = p.opsByPC[savedId]||[];
+        var card = document.querySelector('.op-pc-card[data-pcid="'+realId+'"]');
+        if(!card) return;
+        card.querySelectorAll('.op-badge').forEach(function(badge){
+          if(ops.indexOf(badge.textContent) >= 0){
+            badge.classList.add('on');
+          } else {
+            badge.classList.remove('on');
+          }
+        });
+      });
+    }
+    if(typeof updateHeader === 'function') updateHeader();
+    if(typeof buildPreview === 'function') buildPreview();
+  }, 150);
 }
 
 function histExcluir(id, btn){
