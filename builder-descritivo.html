@@ -895,7 +895,7 @@ function buildPCHTML(id,num,name,tipo,equip,desc,expanded){
     equipPanel+='</div></div>';
   }
   var html='<div class="pc-card-head" data-pcid="'+id+'">';
-  html+='<input type="text" id="pcnum_'+id+'" value="'+safeNum+'" placeholder="PC01" style="font-family:var(--mono);font-weight:700;text-align:center">';
+  html+='<input type="text" id="pcnum_'+id+'" value="'+safeNum+'" placeholder="PC01" style="font-family:var(--mono);font-weight:700;text-align:center" onblur="refreshHWQuickPC()">';
   html+='<input type="text" id="pcname_'+id+'" value="'+safeName+'" placeholder="Ex: Balanca Pesagem" oninput="autoTypePCId(this)" onblur="autoTypePCIdBlur(this)">';
   html+='<select id="pctype_'+id+'" data-pcid="'+id+'" onchange="changePCTypeEl(this)" style="padding:6px 8px;font-size:12px">'+typeOpts+'</select>';
   html+='<button class="pc-expand-btn" data-pcid="'+id+'" onclick="togglePCPanelEl(this)" title="Equipamentos de automacao">&#9881;</button>';
@@ -937,6 +937,8 @@ function autoTypePCIdBlur(inp){
   else if(/portaria|entra|sa.da|acesso|tulha|carga/.test(name)) novoTipo='acesso';
   else if(/cadastr|triag/.test(name)) novoTipo='cadastro';
   if(novoTipo){ sel.value=novoTipo; changePCTypeEl(sel); }
+  // Atualizar dropdown de hardware sempre que nome mudar
+  refreshHWQuickPC();
 }
 function toggleEquipEl(el){
   el.classList.toggle('on');
@@ -1053,6 +1055,8 @@ function refreshHWQuickPC(){
   pcItems.forEach(function(id){
     var num  = document.getElementById('pcnum_'+id)?.value||'';
     var name = document.getElementById('pcname_'+id)?.value||'';
+    // Nao exibir PCs sem numero no dropdown de hardware
+    if(!num || !num.trim()) return;
     var opt  = document.createElement('option');
     opt.value = id;
     opt.textContent = num + (name ? ' — '+name : '');
@@ -1208,7 +1212,7 @@ function buildFlxPCBtns(fxId, currentSeq){
   pcItems.forEach(function(pcId){
     var num = document.getElementById('pcnum_'+pcId)?.value||'';
     var name = document.getElementById('pcname_'+pcId)?.value||'';
-    if(!num) return;
+    if(!num || !num.trim()) return; // ignorar PCs sem numero
     html += '<button class="flx-pc-btn" onclick="addPCToFlx(\''+fxId+'\',\''+num+'\',\''+name+'\')" title="'+name+'">'+num+'</button>';
   });
   html += '</div>';
@@ -1457,7 +1461,7 @@ function collect(){
       toledo:{pat:{n:g('t_pat_n'),e:g('t_pat_e')},ger:{n:g('t_ger_n'),e:g('t_ger_e')},ti:{n:g('t_ti_n'),e:g('t_ti_e')},at:{n:g('t_at_n'),e:g('t_at_e')},rps:{n:g('t_rps_n'),e:g('t_rps_e')}},
       cliente:{pat:{n:g('c_pat_n'),e:g('c_pat_e')},ger:{n:g('c_ger_n'),e:g('c_ger_e')},ti:{n:g('c_ti_n'),e:g('c_ti_e')},op:{n:g('c_op_n'),e:g('c_op_e')}}
     },
-    pcs:pcItems.map(id=>({num:g('pcnum_'+id),name:g('pcname_'+id),desc:g('pcdesc_'+id),tipo:g('pctype_'+id)||'outro',equip:getEquip(id)})),
+    pcs:pcItems.map(id=>({num:g('pcnum_'+id),name:g('pcname_'+id),desc:g('pcdesc_'+id),tipo:g('pctype_'+id)||'outro',equip:getEquip(id)})).filter(function(pc){return pc.num && pc.num.trim()!=='';}),
     sw:swItems.map(id=>({code:g('swcode_'+id),desc:g('swdesc_'+id),qty:g('swqty_'+id)})),
     hw:hwItems.map(function(id){
       var code=document.getElementById('hwcode_'+id)?.value||'';
@@ -3291,8 +3295,19 @@ function applyPayload(p){
 
   // ── PCs ─────────────────────────────────────────────────────────
   if(p.pcs && p.pcs.length){
-    p.pcs.forEach(function(pc){
+    p.pcs.filter(function(pc){ return pc.num && pc.num.trim()!==''; }).forEach(function(pc){
       addPC(pc.num||'', pc.name||'', pc.tipo||'outro', pc.equip||{}, pc.desc||'', false);
+    });
+    // Garantir que os valores de pcnum/pcname estao corretos após addPC
+    // (changePCTypeEl pode ter sobrescrito algum valor)
+    var validPCs = p.pcs.filter(function(pc){ return pc.num && pc.num.trim()!==''; });
+    pcItems.forEach(function(realId, idx){
+      var pc = validPCs[idx];
+      if(!pc) return;
+      var numEl  = document.getElementById('pcnum_'+realId);
+      var nameEl = document.getElementById('pcname_'+realId);
+      if(numEl  && numEl.value  !== pc.num)  numEl.value  = pc.num;
+      if(nameEl && nameEl.value !== pc.name) nameEl.value = pc.name;
     });
     // operações por PC aplicadas no bloco final de applyPayload
   }
@@ -3312,15 +3327,19 @@ function applyPayload(p){
     p.fluxos.forEach(function(f){
       var seq = [];
       if(f.seq && Array.isArray(f.seq) && f.seq.length > 0){
-        // Usar seq diretamente (formato novo: [{num,name},...])
+        // Formato novo: array [{num,name},...]
         seq = f.seq;
-      } else if(f.pcs && typeof f.pcs === 'string' && f.pcs.indexOf('→') >= 0){
-        // Fallback: reconstruir seq a partir da string "PC01 (Nome) → PC02 (Nome)"
-        seq = f.pcs.split('→').map(function(s){
-          s = s.trim();
-          var m = s.match(/^(\S+)\s*(?:\(([^)]*)\))?/);
-          return m ? {num: m[1], name: m[2]||''} : {num: s, name: ''};
-        });
+      } else if(f.pcs && typeof f.pcs === 'string' && f.pcs.trim() !== ''){
+        // Fallback: reconstruir a partir da string "PC01 (Nome) → PC02 (Nome)"
+        // Aceita tanto '→' quanto '->'
+        var sep = f.pcs.indexOf('→') >= 0 ? '→' : '->';
+        if(f.pcs.indexOf(sep) >= 0){
+          seq = f.pcs.split(sep).map(function(s){
+            s = s.trim();
+            var m = s.match(/^([A-Za-z0-9_-]+)\s*(?:\(([^)]*)\))?/);
+            return m ? {num: m[1].trim(), name: (m[2]||'').trim()} : {num: s, name: ''};
+          }).filter(function(s){ return s.num; });
+        }
       }
       addFluxo(f.code||'', f.name||'', seq, f.type||'');
     });
