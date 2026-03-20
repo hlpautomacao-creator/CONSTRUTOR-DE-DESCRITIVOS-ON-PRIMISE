@@ -3184,17 +3184,20 @@ function histRenderizar(projetos){
     var data     = p.doc_date || '';
     var criado   = (function(dt){
       if(!dt) return '';
-      // Formatar data amigavel: Hoje, Ontem ou dd/mm/aaaa hh:mm
       var parts = dt.split(' ');
       if(parts.length < 2) return dt;
       var dateParts = parts[0].split('/');
       if(dateParts.length < 3) return dt;
-      var d = new Date(dateParts[2]+'-'+dateParts[1]+'-'+dateParts[0]);
-      var hoje = new Date(); hoje.setHours(0,0,0,0);
+      // Converter dd/mm/aaaa para aaaa-mm-dd para o Date() funcionar corretamente
+      var iso = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+      var d = new Date(iso + 'T00:00:00'); // forcar meia-noite local
+      var hoje = new Date();
+      var dStr  = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+      var hStr  = hoje.getFullYear()+'-'+(hoje.getMonth()+1)+'-'+hoje.getDate();
       var ontem = new Date(hoje); ontem.setDate(ontem.getDate()-1);
-      d.setHours(0,0,0,0);
-      if(d.getTime()===hoje.getTime()) return 'Hoje ' + parts[1];
-      if(d.getTime()===ontem.getTime()) return 'Ontem ' + parts[1];
+      var oStr  = ontem.getFullYear()+'-'+(ontem.getMonth()+1)+'-'+ontem.getDate();
+      if(dStr === hStr) return 'Hoje ' + parts[1];
+      if(dStr === oStr) return 'Ontem ' + parts[1];
       return dt;
     })(p.criado_em || '');
     var ct       = p.ct_hardware || '';
