@@ -3134,26 +3134,199 @@ function histClonar(id){
         alert('Não foi possível carregar o projeto.');
         return;
       }
-      var p = d.payload;
-      // Preencher os campos do builder com os dados do projeto clonado
-      var campos = ['clientName','clientCity','clientUnit','ctHardware','ctCloud',
-                    'clientFilial','analystName','docRevision','docDate'];
-      campos.forEach(function(c){
-        var el = document.getElementById(c) || document.querySelector('[name="'+c+'"]');
-        if(el && p[c] !== undefined) el.value = p[c];
-      });
-      // Disparar eventos de change para atualizar o preview
-      campos.forEach(function(c){
-        var el = document.getElementById(c) || document.querySelector('[name="'+c+'"]');
-        if(el) el.dispatchEvent(new Event('input', {bubbles:true}));
-      });
+      applyPayload(d.payload);
       closeHistorico();
-      goTo(0); // Ir para a primeira seção
+      goTo(0);
       if(typeof updatePreview === 'function') updatePreview();
-      // Toast de confirmação
-      _histToast('Projeto "' + _esc(p.clientName||'') + '" carregado! Verifique e ajuste os campos antes de gerar.');
+      _histToast('Projeto "' + _esc(d.payload.clientName||'') + '" carregado com sucesso!');
     })
     .catch(function(){ alert('Erro ao clonar projeto.'); });
+}
+
+function applyPayload(p){
+  // ── Limpar estado atual ──────────────────────────────────────────
+  pcItems.forEach(function(id){ document.getElementById('pc_'+id)?.remove(); }); pcItems=[];
+  swItems.forEach(function(id){ document.getElementById('sw_'+id)?.remove(); }); swItems=[];
+  hwItems.forEach(function(id){ document.getElementById('hw_'+id)?.remove(); }); hwItems=[];
+  flxItems.forEach(function(id){ document.getElementById('fx_'+id)?.remove(); }); flxItems=[];
+  filaItems.forEach(function(id){ document.getElementById('fl_'+id)?.remove(); }); filaItems=[];
+  patioItems.forEach(function(id){ document.getElementById('pt_'+id)?.remove(); }); patioItems=[];
+  var opList = document.getElementById('opPCList');
+  if(opList) opList.innerHTML='';
+  var flxList = document.getElementById('flxList');
+  if(flxList) flxList.innerHTML='';
+
+  // ── Seção 0: Identificação ───────────────────────────────────────
+  var simples = ['clientName','clientCity','clientUnit','clientFilial','clientDesc',
+                 'ctHardware','ctCloud','analystName','docRevision','docDate','revDesc'];
+  simples.forEach(function(c){
+    var el = document.getElementById(c);
+    if(el && p[c] !== undefined) el.value = p[c];
+  });
+
+  // ── Responsáveis ────────────────────────────────────────────────
+  if(p.resp){
+    var r = p.resp;
+    var rfMap = {
+      't_pat_n': r.toledo?.pat?.n, 't_pat_e': r.toledo?.pat?.e,
+      't_ger_n': r.toledo?.ger?.n, 't_ger_e': r.toledo?.ger?.e,
+      't_ti_n':  r.toledo?.ti?.n,  't_ti_e':  r.toledo?.ti?.e,
+      't_at_n':  r.toledo?.at?.n,  't_at_e':  r.toledo?.at?.e,
+      't_rps_n': r.toledo?.rps?.n, 't_rps_e': r.toledo?.rps?.e,
+      'c_pat_n': r.cliente?.pat?.n,'c_pat_e': r.cliente?.pat?.e,
+      'c_ger_n': r.cliente?.ger?.n,'c_ger_e': r.cliente?.ger?.e,
+      'c_ti_n':  r.cliente?.ti?.n, 'c_ti_e':  r.cliente?.ti?.e,
+      'c_op_n':  r.cliente?.op?.n, 'c_op_e':  r.cliente?.op?.e
+    };
+    Object.keys(rfMap).forEach(function(k){
+      var el = document.getElementById(k);
+      if(el && rfMap[k] !== undefined) el.value = rfMap[k];
+    });
+  }
+
+  // ── PCs ─────────────────────────────────────────────────────────
+  if(p.pcs && p.pcs.length){
+    p.pcs.forEach(function(pc){
+      addPC(pc.num||'', pc.name||'', pc.tipo||'outro', pc.equip||{}, pc.desc||'', false);
+    });
+    // Aguardar renderização e depois aplicar operações marcadas
+    setTimeout(function(){
+      if(p.opsByPC){
+        Object.keys(p.opsByPC).forEach(function(savedId, idx){
+          var realId = pcItems[idx];
+          if(!realId) return;
+          var ops = p.opsByPC[savedId]||[];
+          var card = document.querySelector('.op-pc-card[data-pcid="'+realId+'"]');
+          if(!card) return;
+          card.querySelectorAll('.op-badge').forEach(function(badge){
+            if(ops.indexOf(badge.textContent) >= 0){
+              badge.classList.add('on');
+            } else {
+              badge.classList.remove('on');
+            }
+          });
+        });
+      }
+    }, 100);
+  }
+
+  // ── Software ────────────────────────────────────────────────────
+  if(p.sw && p.sw.length){
+    p.sw.forEach(function(s){ addSW(s.code||'', s.desc||'', s.qty||'1'); });
+  }
+
+  // ── Hardware ────────────────────────────────────────────────────
+  if(p.hw && p.hw.length){
+    p.hw.forEach(function(h){ addHW(h.pc||'', h.code||'', h.qty||'1'); });
+  }
+
+  // ── Fluxos ──────────────────────────────────────────────────────
+  if(p.fluxos && p.fluxos.length){
+    p.fluxos.forEach(function(f){
+      addFluxo(f.code||'', f.name||'', f.seq ? JSON.stringify(f.seq) : '[]', f.type||'');
+    });
+  }
+  var elFlxObs = document.getElementById('flxObs');
+  if(elFlxObs && p.flxObs) elFlxObs.value = p.flxObs;
+
+  // ── ERP ─────────────────────────────────────────────────────────
+  if(p.erp){
+    if(p.erp.tipo) setERP(p.erp.tipo);
+    ['erpName','erpVendor','erpResp','txtFolder','btSGBD','btBanco','btTabelas'].forEach(function(k){
+      var el = document.getElementById(k);
+      if(el && p.erp[k.replace('erp','').toLowerCase()] !== undefined) el.value = p.erp[k.replace('erp','').toLowerCase()]||'';
+    });
+    // Restaurar nome/vendor diretamente
+    if(document.getElementById('erpName') && p.erp.nome) document.getElementById('erpName').value = p.erp.nome;
+    if(document.getElementById('erpVendor') && p.erp.vendor) document.getElementById('erpVendor').value = p.erp.vendor;
+    if(document.getElementById('erpResp') && p.erp.resp) document.getElementById('erpResp').value = p.erp.resp;
+    // Modo WS
+    if(p.erp.mode){
+      var wsBtns = document.getElementById('wsMode')?.querySelectorAll('.tg-btn')||[];
+      wsBtns.forEach(function(b){ if(b.textContent.trim()===p.erp.mode){ setExcl(b,'wsMode'); } });
+    }
+    // Métodos WS
+    if(p.erp.methods) p.erp.methods.forEach(function(m){
+      var el = document.getElementById(m);
+      if(el && !el.classList.contains('on')) el.classList.add('on');
+    });
+    // Interfaces TXT
+    if(p.erp.txtInterfaces) p.erp.txtInterfaces.forEach(function(m){
+      var el = document.getElementById(m);
+      if(el && !el.classList.contains('on')) el.classList.add('on');
+    });
+    if(document.getElementById('txtFolder') && p.erp.txtFolder) document.getElementById('txtFolder').value = p.erp.txtFolder;
+    if(document.getElementById('btSGBD') && p.erp.btSGBD) document.getElementById('btSGBD').value = p.erp.btSGBD;
+    if(document.getElementById('btBanco') && p.erp.btBanco) document.getElementById('btBanco').value = p.erp.btBanco;
+    if(document.getElementById('btTabelas') && p.erp.btTabelas) document.getElementById('btTabelas').value = p.erp.btTabelas;
+  }
+
+  // ── Operações dos PCs (tg_* toggles) ────────────────────────────
+  if(p.op){
+    var tgMap = {
+      'tg_cad':p.op.cadTipo, 'tg_tag':p.op.tagTipo, 'tg_pes':p.op.pesTipo,
+      'tg_tol':p.op.tolTipo, 'tg_bloq':p.op.bloqTipo, 'tg_tiq':p.op.tiqTipo,
+      'tg_saida':p.op.saidaTipo
+    };
+    Object.keys(tgMap).forEach(function(gid){
+      if(!tgMap[gid]) return;
+      var btns = document.getElementById(gid)?.querySelectorAll('.tg-btn')||[];
+      btns.forEach(function(b){ if(b.textContent.trim()===tgMap[gid]) setExcl(b,gid); });
+    });
+    ['op_cad_obs','op_tol_val','op_tiq_campos','op_saida_obs','op_especiais'].forEach(function(k){
+      var el = document.getElementById(k);
+      var val = p.op[k.replace('op_','').replace(/_obs|_val|_campos/,'').replace('cad','cad')+'Obs']||
+                p.op[k.replace('op_','').replace('_val','Val').replace('_campos','Campos')]||
+                p.op[k.replace('op_','')+'Obs']||'';
+      // mapeamento direto
+      var directMap = {
+        'op_cad_obs': p.op.cadObs,
+        'op_tol_val': p.op.tolVal,
+        'op_tiq_campos': p.op.tiqCampos,
+        'op_saida_obs': p.op.saidaObs,
+        'op_especiais': p.op.especiais
+      };
+      if(el && directMap[k]) el.value = directMap[k];
+    });
+  }
+
+  // ── Módulos ─────────────────────────────────────────────────────
+  if(p.mods){
+    var modMap = {
+      'mod_fila':p.mods.fila, 'mod_inspecao':p.mods.inspecao, 'mod_tulha':p.mods.tulha,
+      'mod_moega':p.mods.moega, 'mod_yms':p.mods.yms, 'mod_agend':p.mods.agend,
+      'mod_cloud':p.mods.cloud, 'mod_facil':p.mods.facil, 'mod_gw':p.mods.gw,
+      'mod_ad':p.mods.ad, 'mod_relatorio':p.mods.relatorio, 'mod_campos':p.mods.campos
+    };
+    Object.keys(modMap).forEach(function(mod){
+      var el = document.getElementById(mod);
+      if(!el) return;
+      var shouldBeOn = !!modMap[mod];
+      var isCurrentlyOn = el.classList.contains('on');
+      if(shouldBeOn !== isCurrentlyOn) toggleMod(mod);
+    });
+  }
+
+  // ── Filas ────────────────────────────────────────────────────────
+  if(p.filas && p.filas.length && p.mods && p.mods.fila){
+    // Limpar filas existentes já adicionadas pelo toggleMod
+    filaItems.forEach(function(id){ document.getElementById('fl_'+id)?.remove(); }); filaItems=[];
+    p.filas.forEach(function(f){ addFila(f.name||'', f.cred||'', f.deb||''); });
+  }
+
+  // ── Pátios ───────────────────────────────────────────────────────
+  if(p.patios && p.patios.length && p.mods && p.mods.yms){
+    // Limpar pátios existentes já adicionados pelo toggleMod
+    patioItems.forEach(function(id){ document.getElementById('pt_'+id)?.remove(); }); patioItems=[];
+    p.patios.forEach(function(pt){ addPatio(pt.name||'', pt.cred||'', pt.deb||'', pt.max||'100'); });
+  }
+
+  // ── Obs finais ───────────────────────────────────────────────────
+  var elObs = document.getElementById('obsFinais');
+  if(elObs && p.obsFinais) elObs.value = p.obsFinais;
+
+  if(typeof updateHeader === 'function') updateHeader();
+  if(typeof buildPreview === 'function') buildPreview();
 }
 
 function histExcluir(id, btn){
