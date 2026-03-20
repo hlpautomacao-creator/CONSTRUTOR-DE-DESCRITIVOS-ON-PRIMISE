@@ -133,7 +133,7 @@ def _listar_projetos(analista='', busca='', limite=50) -> list:
         return [{'id': str(r[0]), 'analista': r[1], 'cliente': r[2],
                  'cidade': r[3], 'revisao': r[4], 'doc_date': r[5],
                  'ct_hardware': r[6], 'ct_cloud': r[7], 'filial': r[8],
-                 'criado_em': r[9].strftime('%d/%m/%Y %H:%M') if r[9] else ''}
+                 'criado_em': (r[9] - datetime.timedelta(hours=3)).strftime('%d/%m/%Y %H:%M') if r[9] else ''}
                 for r in rows]
     except Exception as e:
         print(f'  [DB] Listar falhou: {e}')

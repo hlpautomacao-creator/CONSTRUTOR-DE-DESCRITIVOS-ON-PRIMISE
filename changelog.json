@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.10",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "correção da data de criação do historico de descritivo",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.9",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",
