@@ -229,6 +229,9 @@ except ImportError as _docx_err:
     print(f'  [AVISO] python-docx indisponível: {_docx_err}')
     _DOCX_AVAILABLE = False
 
+# ── Logo PRIX (marca Toledo do Brasil) ─────────────────────────────────────
+PRIX_LOGO_B64 = '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'
+
 # ── Cores Toledo ──────────────────────────────────────────────────────────────
 if _DOCX_AVAILABLE:
     C_AZUL_ESCURO = RGBColor(0x1A,0x3A,0x6B)
@@ -578,11 +581,10 @@ def _html_to_docx(doc, html):
 
     Builder().feed(html)
 
-    # Aplicar shading/border especial nos headings gerados
+    # Aplicar border especial nos H2 gerados pelo HTML
     for p in doc.paragraphs:
         sn = (p.style.name or '') if p.style else ''
-        if 'Heading 1' in sn: _add_h1_shading(p)
-        elif 'Heading 2' in sn: _add_h2_border(p)
+        if 'Heading 2' in sn: _add_h2_border(p)
 
 
 # ── Função principal ──────────────────────────────────────────────────────────
@@ -636,9 +638,10 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     _no_borders_tbl(htbl)
     # Definir largura via layout fixed (sem tblW para evitar erro de schema)
     _tbl_width(htbl, CONTENT_W)
-    hw = CONTENT_W // 2
+    hw_left  = int(CONTENT_W * 0.60)
+    hw_right = CONTENT_W - hw_left
     cl = htbl.rows[0].cells[0]; cr = htbl.rows[0].cells[1]
-    for c in [cl, cr]: _cell_width(c, hw)
+    _cell_width(cl, hw_left); _cell_width(cr, hw_right)
 
     pl = cl.paragraphs[0]
     pl.alignment = WD_ALIGN_PARAGRAPH.LEFT
@@ -662,9 +665,14 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     jc_r  = OxmlElement('w:jc')
     jc_r.set(qn('w:val'), 'right')
     pPr_r.append(jc_r)
-    if toledo_logo:
-        pr.add_run().add_picture(io.BytesIO(toledo_logo),
-                                  width=Cm(4.0))
+    # Usar logo PRIX com fundo branco (substitui logo Toledo)
+    try:
+        prix_bytes = base64.b64decode(PRIX_LOGO_B64)
+        pr.add_run().add_picture(io.BytesIO(prix_bytes), width=Cm(3.5))
+    except Exception as e:
+        print(f'  [AVISO] Logo PRIX falhou: {e}')
+        if toledo_logo:
+            pr.add_run().add_picture(io.BytesIO(toledo_logo), width=Cm(3.5))
 
     # Linha separadora no header (sem spacing para evitar erro de schema)
     p_sep = hdr.add_paragraph()
@@ -774,45 +782,50 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     _sep_line(doc, '1A3A6B', 8)
     _page_break(doc)
 
-    # ── PÁGINA 2: INFORMAÇÕES DO DOCUMENTO ────────────────────────────────────
-    # Título da seção
-    p = doc.add_paragraph(); _spacing(p, 0, 100)
-    set_para_shd(p, '1A3A6B')
-    r = p.add_run('Informações do Documento')
-    r.font.name='Arial Black'; r.font.size=Pt(13)
-    r.font.bold=True; r.font.color.rgb=C_BRANCO
+    # ── PÁGINA 2: INFORMAÇÕES DO DOCUMENTO + HISTÓRICO ──────────────────────
+    def _section_title(doc, txt):
+        """Título de seção: texto azul escuro com linha inferior — sem fundo"""
+        p = doc.add_paragraph(); _spacing(p, 60, 60)
+        r = p.add_run(txt)
+        r.font.name='Arial Black'; r.font.size=Pt(13)
+        r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
+        pPr = p._p.get_or_add_pPr()
+        pBdr = OxmlElement('w:pBdr')
+        bot = OxmlElement('w:bottom')
+        bot.set(qn('w:val'),'single'); bot.set(qn('w:sz'),'8')
+        bot.set(qn('w:space'),'1'); bot.set(qn('w:color'),'1A3A6B')
+        pBdr.append(bot); pPr.append(pBdr)
 
-    doc_filename = f"Descritivo Funcional_GuardianPRO_{data.get('clientName','NomeCliente')}_{data.get('docRevision','Rev00')}"
+    _section_title(doc, 'Informações do Documento')
+
+    doc_filename = "Descritivo Funcional_GuardianPRO_{}_{}" .format(
+        data.get('clientName','NomeCliente'), data.get('docRevision','Rev00'))
     info_rows = [
         ('Título do Documento', 'Descritivo Funcional'),
         ('Autor',               data.get('analystName','') or '—'),
         ('Nome do Arquivo',     doc_filename),
     ]
-    CL2, CV2 = 4000, 7600
+    TW  = CONTENT_W
+    CL2 = int(TW * 0.35)
+    CV2 = TW - CL2
     tbl_info = doc.add_table(rows=len(info_rows), cols=2)
     tbl_info.style = 'Table Grid'
     tbl_info.alignment = WD_TABLE_ALIGNMENT.LEFT
-    _tbl_width(tbl_info, CL2+CV2)
+    _tbl_width(tbl_info, TW)
     for ri,(lbl,val) in enumerate(info_rows):
         for cell,w,txt,bold in [
             (tbl_info.rows[ri].cells[0], CL2, lbl, True),
             (tbl_info.rows[ri].cells[1], CV2, val, False),
         ]:
-            _cell_shading(cell, 'DCE6F1' if bold else ('FFFFFF' if ri%2==0 else 'F4F6FB'))
+            _cell_shading(cell, 'EBF3FB' if bold else ('FFFFFF' if ri%2==0 else 'F7FAFD'))
             _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
             cp = cell.paragraphs[0]; _spacing(cp, 80, 80)
             rr = cp.add_run(txt)
             rr.font.name='Arial'; rr.font.size=Pt(10); rr.font.bold=bold
             if bold: rr.font.color.rgb=C_AZUL_ESCURO
 
-    doc.add_paragraph()  # espaçador
-
-    # ── HISTÓRICO DE REVISÕES ─────────────────────────────────────────────────
-    p = doc.add_paragraph(); _spacing(p, 60, 100)
-    set_para_shd(p, '1A3A6B')
-    r = p.add_run('Histórico de Revisões')
-    r.font.name='Arial Black'; r.font.size=Pt(13)
-    r.font.bold=True; r.font.color.rgb=C_BRANCO
+    doc.add_paragraph()
+    _section_title(doc, 'Histórico de Revisões')
 
     rev_data  = data.get('docDate','') or '—'
     rev_num   = data.get('docRevision','Rev00') or 'Rev00'
@@ -820,42 +833,159 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     rev_autor = data.get('analystName','') or '—'
 
     rev_headers = ['Data', 'Rev.', 'Descrição', 'Autor']
-    rev_widths  = [1800, 1200, 6000, 2600]
+    rev_widths_pct = [0.15, 0.10, 0.50, 0.25]
+    rev_widths_dxa = [int(TW * pc) for pc in rev_widths_pct]
+    rev_widths_dxa[-1] = TW - sum(rev_widths_dxa[:-1])
+
     tbl_rev = doc.add_table(rows=2, cols=4)
     tbl_rev.style = 'Table Grid'
     tbl_rev.alignment = WD_TABLE_ALIGNMENT.LEFT
-    _tbl_width(tbl_rev, sum(rev_widths))
-    # Cabeçalho
-    for ci,(cell,hdr,w) in enumerate(zip(tbl_rev.rows[0].cells, rev_headers, rev_widths)):
+    _tbl_width(tbl_rev, TW)
+    for ci,(cell,hdr,w) in enumerate(zip(tbl_rev.rows[0].cells, rev_headers, rev_widths_dxa)):
         _cell_shading(cell,'1A3A6B'); _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
-        cp=cell.paragraphs[0]; _spacing(cp,60,60)
+        cp=cell.paragraphs[0]; _spacing(cp,80,80)
         rr=cp.add_run(hdr); rr.font.name='Arial'; rr.font.size=Pt(10)
         rr.font.bold=True; rr.font.color.rgb=C_BRANCO
-    # Linha de revisão
     for ci,(cell,val,w) in enumerate(zip(tbl_rev.rows[1].cells,
-                                          [rev_data, rev_num, rev_desc, rev_autor],
-                                          rev_widths)):
+                                          [rev_data,rev_num,rev_desc,rev_autor], rev_widths_dxa)):
         _cell_shading(cell,'FFFFFF'); _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
-        cp=cell.paragraphs[0]; _spacing(cp,60,60)
+        cp=cell.paragraphs[0]; _spacing(cp,80,80)
         rr=cp.add_run(str(val)); rr.font.name='Arial'; rr.font.size=Pt(10)
 
     _sep_line(doc, '1A3A6B', 6)
     _page_break(doc)
 
-    # ── ÍNDICE ────────────────────────────────────────────────────────────────
-    p = doc.add_paragraph(); _spacing(p, 0, 80)
-    set_para_shd(p, '1A3A6B')
+    # ── ÍNDICE — título simples, sem fundo colorido ────────────────────────────
+    p = doc.add_paragraph(); _spacing(p, 0, 60)
     r = p.add_run('Índice')
     r.font.name='Arial Black'; r.font.size=Pt(14)
-    r.font.bold=True; r.font.color.rgb=C_BRANCO
-    doc.add_paragraph()
+    r.font.bold=True; r.font.color.rgb=C_AZUL_ESCURO
     _add_toc(doc)
     _page_break(doc)
+
 
     # ── CONTEÚDO ──────────────────────────────────────────────────────────────
     html = data.get('htmlContent','')
     if html:
         _html_to_docx(doc, html)
+
+    # ── IMAGENS PADRÃO GUARDIAN (inseridas após o conteúdo HTML) ──────────────
+    def _add_img_section(doc, title, b64_str, caption='', width_cm=16.0):
+        """Insere imagem padrão com título e legenda"""
+        if not b64_str: return
+        try:
+            img_data = base64.b64decode(b64_str.split('base64,',1)[-1])
+        except: return
+        # Título da seção de imagem
+        if title:
+            p_t = doc.add_paragraph(); _spacing(p_t, 80, 20)
+            r_t = p_t.add_run(title)
+            r_t.font.name='Arial Black'; r_t.font.size=Pt(12)
+            r_t.font.bold=True; r_t.font.color.rgb=C_AZUL_ESCURO
+            pPr = p_t._p.get_or_add_pPr()
+            pBdr = OxmlElement('w:pBdr')
+            bot = OxmlElement('w:bottom')
+            bot.set(qn('w:val'),'single'); bot.set(qn('w:sz'),'6')
+            bot.set(qn('w:space'),'1'); bot.set(qn('w:color'),'1A3A6B')
+            pBdr.append(bot); pPr.append(pBdr)
+        # Imagem
+        p_i = doc.add_paragraph(); _spacing(p_i, 20, 10)
+        p_i.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        try:
+            p_i.add_run().add_picture(io.BytesIO(img_data), width=Cm(width_cm))
+        except: return
+        # Legenda
+        if caption:
+            p_c = doc.add_paragraph(); _spacing(p_c, 0, 40)
+            p_c.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            r_c = p_c.add_run(caption)
+            r_c.font.name='Arial'; r_c.font.size=Pt(9)
+            r_c.font.italic=True; r_c.font.color.rgb=RGBColor(0x66,0x66,0x66)
+
+    # Extrair imagens do HTML do builder (enviadas como GUARDIAN_IMGS)
+    guardian_imgs = data.get('guardianImgs', {})
+    mods = data.get('mods', {})
+
+    # Sempre incluir: Arquitetura da Solução
+    if guardian_imgs.get('arq_solucao'):
+        _page_break(doc)
+        _add_img_section(doc,
+            'Arquitetura Ilustrativa da Solução',
+            guardian_imgs['arq_solucao'],
+            'Figura: Arquitetura ilustrativa da solução Guardian PRO',
+            width_cm=17.0)
+
+    # Tela de Login / Acesso ao Sistema
+    if guardian_imgs.get('tela_login'):
+        _add_img_section(doc,
+            'Acesso ao Sistema — Tela de Login',
+            guardian_imgs['tela_login'],
+            'Figura: Tela de autenticação do Guardian PRO',
+            width_cm=14.0)
+
+    # Tela principal de operação
+    if guardian_imgs.get('tela_operacao'):
+        _add_img_section(doc,
+            'Tela Principal — Operação',
+            guardian_imgs['tela_operacao'],
+            'Figura: Tela principal de operação do Guardian PRO',
+            width_cm=16.0)
+
+    # Pré-Cadastro (se módulo cadastro)
+    if guardian_imgs.get('tela_precadastro'):
+        _add_img_section(doc,
+            'Tela de Pré-Cadastro',
+            guardian_imgs['tela_precadastro'],
+            'Figura: Tela de pré-cadastro de veículo no Guardian PRO',
+            width_cm=16.0)
+
+    # Cadastramento completo
+    if guardian_imgs.get('tela_cadastro'):
+        _add_img_section(doc,
+            'Tela de Cadastramento',
+            guardian_imgs['tela_cadastro'],
+            'Figura: Tela de cadastramento de veículo e motorista no Guardian PRO',
+            width_cm=16.0)
+
+    # TAG / Cartão
+    if guardian_imgs.get('tag_cartao'):
+        _add_img_section(doc,
+            'Modelo do TAG de Identificação',
+            guardian_imgs['tag_cartao'],
+            'Figura: Modelo padrão do TAG de identificação veicular — frente e verso',
+            width_cm=14.0)
+
+    # Pesagem
+    if guardian_imgs.get('tela_pesagem'):
+        _add_img_section(doc,
+            'Tela de Pesagem',
+            guardian_imgs['tela_pesagem'],
+            'Figura: Tela de operação de pesagem no Guardian PRO',
+            width_cm=16.0)
+
+    # Filas (se módulo fila ativo)
+    if guardian_imgs.get('tela_filas_tv') and mods.get('fila'):
+        _add_img_section(doc,
+            'Gerenciamento de Filas — Exibição em TV',
+            guardian_imgs['tela_filas_tv'],
+            'Figura: Tela de gerenciamento de filas exibida em painel de TV',
+            width_cm=16.0)
+
+    # Inspeção veicular (se módulo inspeção ativo)
+    if guardian_imgs.get('tela_inspecao') and mods.get('inspecao'):
+        _add_img_section(doc,
+            'Tela de Inspeção Veicular',
+            guardian_imgs['tela_inspecao'],
+            'Figura: Tela de inspeção veicular via dispositivo móvel',
+            width_cm=14.0)
+
+    # YMS / Pátios (se módulo YMS ativo)
+    if guardian_imgs.get('tela_patio_yms') and mods.get('yms'):
+        _add_img_section(doc,
+            'Gestão de Pátios (YMS)',
+            guardian_imgs['tela_patio_yms'],
+            'Figura: Tela de monitoramento de pátios via Cloud Prix (YMS)',
+            width_cm=16.0)
 
     # Rodapé Toledo: nome do doc à esq | Página X de Y à dir
     doc_title = f"Descritivo Funcional_GuardianPRO_{data.get('clientName','')}_"                 f"{data.get('docRevision','Rev00')}"
