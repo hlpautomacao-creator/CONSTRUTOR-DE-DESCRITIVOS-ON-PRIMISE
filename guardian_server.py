@@ -48,6 +48,7 @@ def _init_db():
                 ct_hardware VARCHAR(80),
                 ct_cloud    VARCHAR(80),
                 filial      VARCHAR(120),
+                segmento    VARCHAR(100),
                 status      VARCHAR(20) DEFAULT 'ativo',
                 criado_em   TIMESTAMP DEFAULT NOW(),
                 payload     JSONB NOT NULL
@@ -56,6 +57,9 @@ def _init_db():
         cur.execute("CREATE INDEX IF NOT EXISTS idx_proj_analista ON projetos(analista)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_proj_cliente  ON projetos(cliente)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_proj_status   ON projetos(status)")
+        # Migration: add segmento column if not exists
+        cur.execute("ALTER TABLE projetos ADD COLUMN IF NOT EXISTS segmento VARCHAR(100)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_proj_segmento ON projetos(segmento)")
         conn.commit()
         cur.close()
         conn.close()
@@ -78,8 +82,8 @@ def _salvar_projeto(data: dict) -> str | None:
         cur.execute("""
             INSERT INTO projetos
                 (analista, cliente, cidade, revisao, doc_date,
-                 ct_hardware, ct_cloud, filial, payload)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                 ct_hardware, ct_cloud, filial, segmento, payload)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             RETURNING id
         """, (
             data.get('analystName',''),
@@ -90,6 +94,7 @@ def _salvar_projeto(data: dict) -> str | None:
             data.get('ctHardware',''),
             data.get('ctCloud',''),
             data.get('clientFilial',''),
+            data.get('clientSegmento',''),
             json.dumps(payload)
         ))
         proj_id = str(cur.fetchone()[0])
@@ -104,7 +109,7 @@ def _salvar_projeto(data: dict) -> str | None:
         except: pass
         return None
 
-def _listar_projetos(analista='', busca='', limite=50) -> list:
+def _listar_projetos(analista='', busca='', segmento='', limite=50) -> list:
     """Lista projetos ativos com filtros opcionais."""
     conn = _get_db()
     if not conn: return []
@@ -118,10 +123,13 @@ def _listar_projetos(analista='', busca='', limite=50) -> list:
         if busca:
             conds.append('(cliente ILIKE %s OR cidade ILIKE %s OR ct_hardware ILIKE %s)')
             params += [f'%{busca}%', f'%{busca}%', f'%{busca}%']
+        if segmento:
+            conds.append('segmento = %s')
+            params.append(segmento)
         where = ' AND '.join(conds)
         cur.execute(f"""
             SELECT id, analista, cliente, cidade, revisao, doc_date,
-                   ct_hardware, ct_cloud, filial, criado_em
+                   ct_hardware, ct_cloud, filial, segmento, criado_em
             FROM projetos
             WHERE {where}
             ORDER BY criado_em DESC
@@ -133,7 +141,8 @@ def _listar_projetos(analista='', busca='', limite=50) -> list:
         return [{'id': str(r[0]), 'analista': r[1], 'cliente': r[2],
                  'cidade': r[3], 'revisao': r[4], 'doc_date': r[5],
                  'ct_hardware': r[6], 'ct_cloud': r[7], 'filial': r[8],
-                 'criado_em': (r[9] - datetime.timedelta(hours=3)).strftime('%d/%m/%Y %H:%M') if r[9] else ''}
+                 'segmento': r[9] or '',
+                 'criado_em': (r[10] - datetime.timedelta(hours=3)).strftime('%d/%m/%Y %H:%M') if r[10] else ''}
                 for r in rows]
     except Exception as e:
         print(f'  [DB] Listar falhou: {e}')
@@ -1795,7 +1804,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         elif path == '/projetos':
             analista = qs.get('analista', [''])[0]
             busca    = qs.get('busca',    [''])[0]
-            projetos = _listar_projetos(analista=analista, busca=busca)
+            segmento = qs.get('segmento', [''])[0]
+            projetos = _listar_projetos(analista=analista, busca=busca, segmento=segmento)
             body = json.dumps({'projetos': projetos}, ensure_ascii=False).encode()
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')

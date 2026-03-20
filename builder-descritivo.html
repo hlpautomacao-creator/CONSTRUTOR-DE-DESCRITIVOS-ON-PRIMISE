@@ -292,6 +292,30 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
       <div class="field"><label>Cidade / UF <span class="req">*</span></label><input type="text" id="clientCity" placeholder="Ex: Palmeira do Piauí - PI"></div>
       <div class="field"><label>Nome da Fazenda / Unidade</label><input type="text" id="clientUnit" placeholder="Ex: Fazenda Serra Boa"></div>
       <div class="field"><label>Filial / Empresa</label><input type="text" id="clientFilial" placeholder="Ex: CGB, CGR"></div>
+      <div class="field">
+        <label>Segmento do Cliente <span class="req">*</span></label>
+        <select id="clientSegmento" style="padding:10px 12px;font-size:14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface2);color:var(--text);width:100%">
+          <option value="">— Selecione o segmento —</option>
+          <option value="Agroindústria">Agroindústria</option>
+          <option value="Agropecuária">Agropecuária</option>
+          <option value="Álcool e açúcar">Álcool e açúcar</option>
+          <option value="Alimentício">Alimentício</option>
+          <option value="Borracha">Borracha</option>
+          <option value="Cimento">Cimento</option>
+          <option value="Farmacêutico">Farmacêutico</option>
+          <option value="Frigorífico">Frigorífico</option>
+          <option value="Papel e celulose">Papel e celulose</option>
+          <option value="Logístico">Logístico</option>
+          <option value="Siderurgia">Siderurgia</option>
+          <option value="Metalurgia">Metalurgia</option>
+          <option value="Mineração">Mineração</option>
+          <option value="Química">Química</option>
+          <option value="Rodovias">Rodovias</option>
+          <option value="Varejo">Varejo</option>
+          <option value="Fertilizantes">Fertilizantes</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
       <div class="field"><label>CT / OV Hardware e Serviços <span class="req">*</span></label><input type="text" id="ctHardware" placeholder="Número do contrato"></div>
       <div class="field"><label>CT Licenciamento Cloud <span class="req">*</span></label><input type="text" id="ctCloud" placeholder="Número do contrato Cloud"></div>
     </div>
@@ -1439,7 +1463,7 @@ function buildPreview(){
   const mods=['mod_fila','mod_inspecao','mod_tulha','mod_moega','mod_yms','mod_agend','mod_cloud','mod_facil','mod_gw','mod_ad','mod_relatorio','mod_campos'].filter(m=>isOn(m));
   const modLabels={'mod_fila':'Filas','mod_inspecao':'Inspeção Veicular','mod_tulha':'Tulha/Carregamento','mod_moega':'Checkpoint Moega','mod_yms':'YMS (Pátios)','mod_agend':'Agendamento','mod_cloud':'Cloud Prix','mod_facil':'Guardian Fácil','mod_gw':'Gestor Web','mod_ad':'Autenticação AD','mod_relatorio':'Relatórios','mod_campos':'Campos Adicionais'};
   document.getElementById('sumGrid').innerHTML=`
-    <div class="sum-card"><div class="sum-label">Cliente</div><div class="sum-val" style="font-size:15px;font-family:var(--font)">${g('clientName')||'—'}</div><div class="sum-sub">${g('clientCity')||'—'}</div></div>
+    <div class="sum-card"><div class="sum-label">Cliente</div><div class="sum-val" style="font-size:15px;font-family:var(--font)">${g('clientName')||'—'}</div><div class="sum-sub">${g('clientCity')||'—'}${document.getElementById('clientSegmento')?.value?' · '+document.getElementById('clientSegmento').value:''}</div></div>
     <div class="sum-card"><div class="sum-label">Analista</div><div class="sum-val" style="font-size:15px;font-family:var(--font)">${g('analystName')||'—'}</div><div class="sum-sub">${g('docRevision')} · ${g('docDate')||'—'}</div></div>
     <div class="sum-card"><div class="sum-label">PCs Configurados</div><div class="sum-val">${pcs.length}</div><div class="sum-sub">${pcs.map(p=>p.num+(p.name?' '+p.name:'')).join(', ')||'Nenhum'}</div></div>
     <div class="sum-card"><div class="sum-label">Integração ERP</div><div class="sum-val" style="font-size:13px;font-family:var(--font)">${erpType==='ws'?'Webservice':erpType==='txt'?'Arquivo Texto':'Banco Tanque'}</div><div class="sum-sub">${g('erpName')||'—'}</div></div>`;
@@ -1455,7 +1479,8 @@ function collect(){
   const g=id=>document.getElementById(id)?.value?.trim()||'';
   return{
     clientName:g('clientName'), clientCity:g('clientCity'), clientUnit:g('clientUnit'),
-    clientFilial:g('clientFilial'), ctHardware:g('ctHardware'), ctCloud:g('ctCloud'),
+    clientFilial:g('clientFilial'),
+    clientSegmento:(document.getElementById('clientSegmento')?.value||''), ctHardware:g('ctHardware'), ctCloud:g('ctCloud'),
     clientDesc:g('clientDesc'), analystName:g('analystName'),
     docRevision:g('docRevision')||'Rev00', docDate:g('docDate'),
     revDesc:g('revDesc')||'Geração do documento',
@@ -3070,6 +3095,27 @@ if(hpl) hpl.innerHTML='<span style="color:var(--text3);font-size:12px">Selecione
     <div class="hist-search">
       <input id="histBusca" type="text" placeholder="Buscar por cliente, cidade, CT/OV…" oninput="histDebounce()">
       <input id="histAnalista" type="text" placeholder="Filtrar por analista…" oninput="histDebounce()">
+      <select id="histSegmento" onchange="histDebounce()" style="font-size:13px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface2);color:var(--text)">
+        <option value="">Todos os segmentos</option>
+        <option value="Agroindústria">Agroindústria</option>
+        <option value="Agropecuária">Agropecuária</option>
+        <option value="Álcool e açúcar">Álcool e açúcar</option>
+        <option value="Alimentício">Alimentício</option>
+        <option value="Borracha">Borracha</option>
+        <option value="Cimento">Cimento</option>
+        <option value="Farmacêutico">Farmacêutico</option>
+        <option value="Frigorífico">Frigorífico</option>
+        <option value="Papel e celulose">Papel e celulose</option>
+        <option value="Logístico">Logístico</option>
+        <option value="Siderurgia">Siderurgia</option>
+        <option value="Metalurgia">Metalurgia</option>
+        <option value="Mineração">Mineração</option>
+        <option value="Química">Química</option>
+        <option value="Rodovias">Rodovias</option>
+        <option value="Varejo">Varejo</option>
+        <option value="Fertilizantes">Fertilizantes</option>
+        <option value="Outro">Outro</option>
+      </select>
       <button class="btn btn-ghost btn-sm" onclick="histCarregar()">🔄 Atualizar</button>
     </div>
     <div class="hist-count" id="histCount"></div>
@@ -3123,8 +3169,10 @@ function histDebounce(){
 function histCarregar(){
   var busca    = document.getElementById('histBusca').value.trim();
   var analista = document.getElementById('histAnalista').value.trim();
+  var segmento = document.getElementById('histSegmento')?.value||'';
   var base     = (window.SERVER_URL || (window.location.origin === 'null' ? 'http://localhost:5555' : window.location.origin));
-  var url      = base + '/projetos?busca=' + encodeURIComponent(busca) + '&analista=' + encodeURIComponent(analista);
+  var url      = base + '/projetos?busca=' + encodeURIComponent(busca) + '&analista=' + encodeURIComponent(analista)
+               + (segmento ? '&segmento=' + encodeURIComponent(segmento) : '');
 
   document.getElementById('histBody').innerHTML = '<div class="hist-loading">Carregando…</div>';
   document.getElementById('histCount').textContent = '';
@@ -3216,6 +3264,7 @@ function histRenderizar(projetos){
     html += '<div class="hist-card-date">' + _esc(criado) + '</div>';
     html += '</div>';
     html += '<div class="hist-card-meta">';
+    if(p.segmento) html += '<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:rgba(0,120,255,.15);color:#4d9fff;border:1px solid rgba(0,120,255,.3);font-size:11px;margin-bottom:4px">' + _esc(p.segmento) + '</span><br>';
     html += '<span><strong>Analista:</strong> <span class="hist-analista-tag">' + _esc(analista) + '</span></span>';
     if(revisao) html += '<span><strong>Revisão:</strong> ' + _esc(revisao) + (data ? ' — ' + _esc(data) : '') + '</span>';
     if(ct)      html += '<span><strong>CT/OV:</strong> '  + _esc(ct) + '</span>';
@@ -3266,7 +3315,7 @@ function applyPayload(p){
   var flxList = document.getElementById('flxList'); if(flxList) flxList.innerHTML='';
 
   // ══ PASSO 2: Campos simples ════════════════════════════════════
-  var simples = ['clientName','clientCity','clientUnit','clientFilial','clientDesc',
+  var simples = ['clientName','clientCity','clientUnit','clientFilial','clientDesc','clientSegmento',
                  'ctHardware','ctCloud','analystName','docRevision','docDate','revDesc'];
   simples.forEach(function(c){
     var el=document.getElementById(c); if(el && p[c]!==undefined) el.value=p[c];

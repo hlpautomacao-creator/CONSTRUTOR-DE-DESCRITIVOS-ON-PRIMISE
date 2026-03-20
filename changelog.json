@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.14",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Incluido campo de segmento do cliente para filtros futuros",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.13",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",
