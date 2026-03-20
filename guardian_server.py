@@ -595,12 +595,12 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     sec = doc.sections[0]
     sec.page_width    = Emu(dxa2emu(PG_W))
     sec.page_height   = Emu(dxa2emu(PG_H))
-    sec.top_margin      = Emu(dxa2emu(MG_TOP))
-    sec.bottom_margin   = Emu(dxa2emu(MG_BOT))
-    sec.left_margin     = Emu(dxa2emu(MG_LEFT))
-    sec.right_margin    = Emu(dxa2emu(MG_RIGHT))
-    sec.header_distance = Emu(dxa2emu(MG_HEADER))
-    sec.footer_distance = Emu(dxa2emu(MG_FOOTER))
+    sec.top_margin      = Cm(2.54)
+    sec.bottom_margin   = Cm(2.54)
+    sec.left_margin     = Cm(1.905)
+    sec.right_margin    = Cm(1.905)
+    sec.header_distance = Cm(1.00)   # igual ao modelo Toledo
+    sec.footer_distance = Cm(1.00)   # igual ao modelo Toledo
     # Ativar cabeçalho/rodapé diferentes na 1a página
     # Nota: titlePg removido — rodapé aparece em todas as páginas (incluindo capa)
 
@@ -631,60 +631,123 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     _set_outline_lvl(h3s._element, 2)
 
     # ── Cabeçalho ─────────────────────────────────────────────────────────────
+    # Replicar exatamente o modelo Toledo:
+    # - Logo cliente à esquerda (inline, pequeno)
+    # - Logo PRIX à DIREITA usando anchor com posição absoluta
+    # - Linha separadora azul abaixo
+    # - Header distance = 1.0cm, compacto
+
     hdr = sec.header
     for p in list(hdr.paragraphs): p._element.getparent().remove(p._element)
 
-    htbl = hdr.add_table(rows=1, cols=2, width=Emu(dxa2emu(CONTENT_W)))
-    _no_borders_tbl(htbl)
-    # Definir largura via layout fixed (sem tblW para evitar erro de schema)
-    _tbl_width(htbl, CONTENT_W)
-    hw_left  = int(CONTENT_W * 0.60)
-    hw_right = CONTENT_W - hw_left
-    cl = htbl.rows[0].cells[0]; cr = htbl.rows[0].cells[1]
-    _cell_width(cl, hw_left); _cell_width(cr, hw_right)
+    # Medidas em EMU (1cm = 360000 EMU)
+    _CM = 360000  # 1cm em EMU
+    LOGO_PRIX_W = int(3.5  * _CM)   # 3.5cm largura
+    LOGO_PRIX_H = int(1.47 * _CM)   # altura proporcional 287x120
+    # Posição horizontal: rente à borda direita da área de conteúdo
+    # relativeFrom="margin" → offset a partir da margem esquerda
+    CONTENT_W_CM = (PG_W - MG_LEFT - MG_RIGHT) / 1440 * 2.54  # cm
+    POS_H_EMU = int((CONTENT_W_CM - 3.5) * _CM)  # alinhado à direita
+    POS_V_EMU = int(-0.20 * _CM)  # ligeiramente acima da linha base
 
-    pl = cl.paragraphs[0]
-    pl.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    def _add_anchor_img(para, img_bytes, w_emu, h_emu, pos_h_emu, pos_v_emu, img_id=1):
+        """Adiciona imagem flutuante (anchor) com posição absoluta no parágrafo"""
+        from docx.oxml.ns import nsmap as _nsmap
+        # Adicionar imagem inline primeiro para obter o rId
+        run = para.add_run()
+        pic = run.add_picture(io.BytesIO(img_bytes), width=Emu(w_emu), height=Emu(h_emu))
+        # Pegar o drawing inline gerado
+        inline_el = run._r.find('.//{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}inline')
+        if inline_el is None:
+            return
+        # Pegar o rId da imagem do blip
+        blip = inline_el.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}blip')
+        if blip is None:
+            return
+        r_embed = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+
+        # Construir anchor XML
+        anchor_xml = f"""<wp:anchor
+            distT="0" distB="0" distL="114300" distR="114300"
+            simplePos="0" relativeHeight="251658247" behindDoc="0"
+            locked="0" layoutInCell="1" allowOverlap="0"
+            xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+            xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <wp:simplePos x="0" y="0"/>
+          <wp:positionH relativeFrom="margin">
+            <wp:posOffset>{pos_h_emu}</wp:posOffset>
+          </wp:positionH>
+          <wp:positionV relativeFrom="paragraph">
+            <wp:posOffset>{pos_v_emu}</wp:posOffset>
+          </wp:positionV>
+          <wp:extent cx="{w_emu}" cy="{h_emu}"/>
+          <wp:effectExtent l="0" t="0" r="2540" b="8255"/>
+          <wp:wrapNone/>
+          <wp:docPr id="{img_id}" name="LogoPrix"/>
+          <wp:cNvGraphicFramePr>
+            <a:graphicFrameLocks noChangeAspect="1"/>
+          </wp:cNvGraphicFramePr>
+          <a:graphic>
+            <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+              <pic:pic>
+                <pic:nvPicPr>
+                  <pic:cNvPr id="{img_id}" name="LogoPrix"/>
+                  <pic:cNvPicPr><a:picLocks noChangeAspect="1" noChangeArrowheads="1"/></pic:cNvPicPr>
+                </pic:nvPicPr>
+                <pic:blipFill>
+                  <a:blip r:embed="{r_embed}"/>
+                  <a:stretch><a:fillRect/></a:stretch>
+                </pic:blipFill>
+                <pic:spPr bwMode="auto">
+                  <a:xfrm><a:off x="0" y="0"/><a:ext cx="{w_emu}" cy="{h_emu}"/></a:xfrm>
+                  <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+                </pic:spPr>
+              </pic:pic>
+            </a:graphicData>
+          </a:graphic>
+        </wp:anchor>"""
+        from lxml import etree as _et
+        anchor_el = _et.fromstring(anchor_xml)
+        # Substituir o inline pelo anchor
+        inline_el.getparent().replace(inline_el, anchor_el)
+
+    # Parágrafo único do cabeçalho: logo cliente à esq + logo PRIX anchor à dir
+    p_hdr = hdr.add_paragraph()
+    _spacing(p_hdr, before=0, after=0)
+
+    # Logo do cliente à esquerda (inline)
     client_logo_b64 = data.get('clientLogoB64','')
     if client_logo_b64:
         try:
-            b64data = client_logo_b64.split('base64,',1)[-1]
-            cimg = base64.b64decode(b64data)
-            pl.add_run().add_picture(io.BytesIO(cimg), width=Cm(3.0))
+            cimg = base64.b64decode(client_logo_b64.split('base64,',1)[-1])
+            p_hdr.add_run().add_picture(io.BytesIO(cimg), width=Cm(2.8))
         except:
-            r=pl.add_run('(logo do cliente)'); r.font.size=Pt(9)
-            r.font.italic=True; r.font.color.rgb=RGBColor(0xAA,0xAA,0xAA)
+            r = p_hdr.add_run('(logo cliente)')
+            r.font.size=Pt(8); r.font.color.rgb=RGBColor(0xAA,0xAA,0xAA)
     else:
-        r=pl.add_run('(logo do cliente)'); r.font.size=Pt(9)
-        r.font.italic=True; r.font.color.rgb=RGBColor(0xAA,0xAA,0xAA)
+        r = p_hdr.add_run()  # parágrafo vazio para o anchor se ancorar
+        r.font.size = Pt(8)
 
-    pr = cr.paragraphs[0]
-    pr.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    # Forçar alinhamento direita via XML (garante no Word)
-    pPr_r = pr._p.get_or_add_pPr()
-    jc_r  = OxmlElement('w:jc')
-    jc_r.set(qn('w:val'), 'right')
-    pPr_r.append(jc_r)
-    # Usar logo PRIX com fundo branco (substitui logo Toledo)
+    # Logo PRIX como anchor posicionado à direita
     try:
-        prix_bytes = base64.b64decode(PRIX_LOGO_B64)
-        pr.add_run().add_picture(io.BytesIO(prix_bytes), width=Cm(3.5))
+        prix_img = base64.b64decode(PRIX_LOGO_B64)
+        _add_anchor_img(p_hdr, prix_img,
+                        LOGO_PRIX_W, LOGO_PRIX_H,
+                        POS_H_EMU, POS_V_EMU, img_id=9001)
     except Exception as e:
-        print(f'  [AVISO] Logo PRIX falhou: {e}')
-        if toledo_logo:
-            pr.add_run().add_picture(io.BytesIO(toledo_logo), width=Cm(3.5))
+        print(f'  [AVISO] Logo PRIX anchor falhou: {e}')
 
-    # Linha separadora no header (sem spacing para evitar erro de schema)
+    # Linha separadora azul abaixo do cabeçalho
     p_sep = hdr.add_paragraph()
+    _spacing(p_sep, before=0, after=0)
     pPr_s = p_sep._p.get_or_add_pPr()
     pBdr_s = OxmlElement('w:pBdr')
     bot_s  = OxmlElement('w:bottom')
     bot_s.set(qn('w:val'),'single'); bot_s.set(qn('w:sz'),'6')
     bot_s.set(qn('w:space'),'1');   bot_s.set(qn('w:color'),'1A3A6B')
-    pBdr_s.append(bot_s)
-    first_s = list(pPr_s)[0] if list(pPr_s) else None
-    if first_s is not None: first_s.addprevious(pBdr_s)
-    else: pPr_s.append(pBdr_s)
+    pBdr_s.append(bot_s); pPr_s.append(pBdr_s)
 
     # ── CAPA ──────────────────────────────────────────────────────────────────
     # Banner Guardian
@@ -810,7 +873,7 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
     CV2 = TW - CL2
     tbl_info = doc.add_table(rows=len(info_rows), cols=2)
     tbl_info.style = 'Table Grid'
-    tbl_info.alignment = WD_TABLE_ALIGNMENT.LEFT
+    tbl_info.alignment = WD_TABLE_ALIGNMENT.CENTER
     _tbl_width(tbl_info, TW)
     for ri,(lbl,val) in enumerate(info_rows):
         for cell,w,txt,bold in [
@@ -839,7 +902,7 @@ def build_docx_pure(data: dict, toledo_logo: bytes, guardian_banner: bytes) -> b
 
     tbl_rev = doc.add_table(rows=2, cols=4)
     tbl_rev.style = 'Table Grid'
-    tbl_rev.alignment = WD_TABLE_ALIGNMENT.LEFT
+    tbl_rev.alignment = WD_TABLE_ALIGNMENT.CENTER
     _tbl_width(tbl_rev, TW)
     for ci,(cell,hdr,w) in enumerate(zip(tbl_rev.rows[0].cells, rev_headers, rev_widths_dxa)):
         _cell_shading(cell,'1A3A6B'); _cell_borders(cell); _cell_width(cell,w); _cell_margin(cell)
