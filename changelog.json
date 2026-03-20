@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.6",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Correção de bugs para recurso de auditoria das revisões",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.5",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",
