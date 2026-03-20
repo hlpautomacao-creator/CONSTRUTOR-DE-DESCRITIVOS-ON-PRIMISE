@@ -15,14 +15,14 @@ def _get_db():
         return None
     try:
         import psycopg2
-        conn = psycopg2.connect(db_url, sslmode='disable', connect_timeout=5)
+        conn = psycopg2.connect(db_url, sslmode='require', connect_timeout=5)
         return conn
     except ImportError:
         try:
             subprocess.run([sys.executable, '-m', 'pip', 'install', 'psycopg2-binary',
                      '--break-system-packages', '-q'], check=True)
             import psycopg2
-            conn = psycopg2.connect(db_url, sslmode='disable', connect_timeout=5)
+            conn = psycopg2.connect(db_url, sslmode='require', connect_timeout=5)
             return conn
         except Exception as e:
             print(f'  [DB] psycopg2 indisponível: {e}')
