@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.9",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "corrigido digitação da descriçao do PC, corrigido revisão na sessao 8",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.8",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",

@@ -896,7 +896,7 @@ function buildPCHTML(id,num,name,tipo,equip,desc,expanded){
   }
   var html='<div class="pc-card-head" data-pcid="'+id+'">';
   html+='<input type="text" id="pcnum_'+id+'" value="'+safeNum+'" placeholder="PC01" style="font-family:var(--mono);font-weight:700;text-align:center">';
-  html+='<input type="text" id="pcname_'+id+'" value="'+safeName+'" placeholder="Ex: Balanca Pesagem" oninput="autoTypePCId(this)">';
+  html+='<input type="text" id="pcname_'+id+'" value="'+safeName+'" placeholder="Ex: Balanca Pesagem" oninput="autoTypePCId(this)" onblur="autoTypePCIdBlur(this)">';
   html+='<select id="pctype_'+id+'" data-pcid="'+id+'" onchange="changePCTypeEl(this)" style="padding:6px 8px;font-size:12px">'+typeOpts+'</select>';
   html+='<button class="pc-expand-btn" data-pcid="'+id+'" onclick="togglePCPanelEl(this)" title="Equipamentos de automacao">&#9881;</button>';
   html+='<button class="btn-rm" data-pcid="'+id+'" onclick="rmPCEl(this)">&#215;</button>';
@@ -921,16 +921,22 @@ function changePCTypeEl(sel){
   wrap.innerHTML=buildPCHTML(id,num,name,tipo,{},desc,true);
 }
 function autoTypePCId(inp){
+  // Apenas atualiza o header enquanto digita — sem interromper a digitacao
+  document.getElementById('hdrName') && updateHeader();
+}
+function autoTypePCIdBlur(inp){
+  // Detecta tipo e reconstroi o PC somente quando o campo perde o foco
   var head=inp.closest('[data-pcid]');
   if(!head) return;
   var id=head.getAttribute('data-pcid');
   var name=(inp.value||'').toLowerCase();
-  document.getElementById('hdrName') && updateHeader();
   var sel=document.getElementById('pctype_'+id);
   if(!sel||sel.value!=='outro') return;
-  if(/balan|pesag/.test(name)) { sel.value='balanca'; changePCTypeEl(sel); }
-  else if(/portaria|entra|sa.da|acesso|tulha|carga/.test(name)) { sel.value='acesso'; changePCTypeEl(sel); }
-  else if(/cadastr|triag/.test(name)) { sel.value='cadastro'; changePCTypeEl(sel); }
+  var novoTipo = null;
+  if(/balan|pesag/.test(name)) novoTipo='balanca';
+  else if(/portaria|entra|sa.da|acesso|tulha|carga/.test(name)) novoTipo='acesso';
+  else if(/cadastr|triag/.test(name)) novoTipo='cadastro';
+  if(novoTipo){ sel.value=novoTipo; changePCTypeEl(sel); }
 }
 function toggleEquipEl(el){
   el.classList.toggle('on');
@@ -1418,7 +1424,12 @@ function rmPatio(id){patioItems=patioItems.filter(x=>x!==id);document.getElement
 function buildPreview(){
   const g=id=>document.getElementById(id)?.value?.trim()||'';
   const pcs=pcItems.map(id=>({num:g('pcnum_'+id),name:g('pcname_'+id),tipo:g('pctype_'+id)||'outro'}));
-  const fxs=flxItems.map(id=>({code:g('fxcode_'+id),name:g('fxname_'+id),pcs:g('fxpcs_'+id)}));
+  const fxs=flxItems.map(function(id){
+    var seq=[];
+    try{seq=JSON.parse(document.getElementById('flxseqdata_'+id)?.value||'[]');}catch(e){}
+    var pcsStr=seq.map(function(s){return s.num+(s.name?' ('+s.name+')':'');}).join(' → ');
+    return {code:g('fxcode_'+id),name:g('fxname_'+id),pcs:pcsStr};
+  });
   const mods=['mod_fila','mod_inspecao','mod_tulha','mod_moega','mod_yms','mod_agend','mod_cloud','mod_facil','mod_gw','mod_ad','mod_relatorio','mod_campos'].filter(m=>isOn(m));
   const modLabels={'mod_fila':'Filas','mod_inspecao':'Inspeção Veicular','mod_tulha':'Tulha/Carregamento','mod_moega':'Checkpoint Moega','mod_yms':'YMS (Pátios)','mod_agend':'Agendamento','mod_cloud':'Cloud Prix','mod_facil':'Guardian Fácil','mod_gw':'Gestor Web','mod_ad':'Autenticação AD','mod_relatorio':'Relatórios','mod_campos':'Campos Adicionais'};
   document.getElementById('sumGrid').innerHTML=`
