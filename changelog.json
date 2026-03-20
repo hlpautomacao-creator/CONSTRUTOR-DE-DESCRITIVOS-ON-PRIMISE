@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.13",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "correção de duplicidade de informações",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.12",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",

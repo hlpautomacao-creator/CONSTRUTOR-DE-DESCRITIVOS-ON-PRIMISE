@@ -859,7 +859,7 @@ const PC_TYPES = {
 };
 
 function addPC(num='',name='',tipo='outro',equip={},desc='',expanded=false){
-  const id=Date.now()+'_pc'; pcItems.push(id);
+  const id=_uid('pc'); pcItems.push(id);
   const wrap=document.createElement('div'); wrap.className='pc-card-wrap'; wrap.id='pc_'+id;
   const t=PC_TYPES[tipo]||PC_TYPES['outro'];
   wrap.innerHTML=buildPCHTML(id,num,name,tipo,equip,desc,expanded);
@@ -1258,7 +1258,7 @@ function addFluxo(code, name, seqData, tipo){
   } else {
     try{ seq = JSON.parse(seqData||'[]'); } catch(e){ seq=[]; }
   }
-  var id=Date.now()+'_fx'; flxItems.push(id);
+  var id=_uid('fx'); flxItems.push(id);
   var div=document.createElement('div'); div.className='flx-card'; div.id='fx_'+id;
   var tipoOpts=['Pesagem','Expedição','Recebimento','Interno','Visitante','Limpeza','Funcionário']
     .map(o=>'<option'+(o===tipo?' selected':'')+'>'+o+'</option>').join('');
@@ -1359,6 +1359,8 @@ function getOpsByPC(pcId){
 
 // ─── Filas e Pátios ─────────────────────────────────────────────
 var filaItems=[], patioItems=[];
+var _itemCounter = 0;
+function _uid(prefix){ return prefix + '_' + (++_itemCounter) + '_' + Date.now(); }
 
 function toggleMod(id){
   document.getElementById(id).classList.toggle('on');
@@ -1395,7 +1397,7 @@ function buildPCSelectForFila(selected){
 }
 function addFila(name, cred, deb){
   name=name||''; cred=cred||''; deb=deb||'';
-  var id=Date.now()+'_fl'; filaItems.push(id);
+  var id=_uid('fl'); filaItems.push(id);
   var div=document.createElement('div'); div.className='dyn-row'; div.id='fl_'+id;
   div.style.gridTemplateColumns='1fr 1fr 1fr 32px';
   div.innerHTML=
@@ -1410,7 +1412,7 @@ function rmFila(id){filaItems=filaItems.filter(x=>x!==id);document.getElementByI
 
 function addPatio(name, cred, deb, max){
   name=name||''; cred=cred||''; deb=deb||''; max=max||'100';
-  var id=Date.now()+'_pt'; patioItems.push(id);
+  var id=_uid('pt'); patioItems.push(id);
   var div=document.createElement('div'); div.className='dyn-row'; div.id='pt_'+id;
   div.style.gridTemplateColumns='1fr 1fr 1fr 80px 32px';
   div.innerHTML=
@@ -3253,289 +3255,184 @@ function histClonar(id){
 }
 
 function applyPayload(p){
-  // ── Limpar estado atual ──────────────────────────────────────────
+  // ══ PASSO 1: Limpar tudo ═══════════════════════════════════════
   pcItems.forEach(function(id){ document.getElementById('pc_'+id)?.remove(); }); pcItems=[];
   swItems.forEach(function(id){ document.getElementById('sw_'+id)?.remove(); }); swItems=[];
   hwItems.forEach(function(id){ document.getElementById('hw_'+id)?.remove(); }); hwItems=[];
   flxItems.forEach(function(id){ document.getElementById('fx_'+id)?.remove(); }); flxItems=[];
   filaItems.forEach(function(id){ document.getElementById('fl_'+id)?.remove(); }); filaItems=[];
   patioItems.forEach(function(id){ document.getElementById('pt_'+id)?.remove(); }); patioItems=[];
-  var opList = document.getElementById('opPCList');
-  if(opList) opList.innerHTML='';
-  var flxList = document.getElementById('flxList');
-  if(flxList) flxList.innerHTML='';
+  var opList = document.getElementById('opPCList'); if(opList) opList.innerHTML='';
+  var flxList = document.getElementById('flxList'); if(flxList) flxList.innerHTML='';
 
-  // ── Seção 0: Identificação ───────────────────────────────────────
+  // ══ PASSO 2: Campos simples ════════════════════════════════════
   var simples = ['clientName','clientCity','clientUnit','clientFilial','clientDesc',
                  'ctHardware','ctCloud','analystName','docRevision','docDate','revDesc'];
   simples.forEach(function(c){
-    var el = document.getElementById(c);
-    if(el && p[c] !== undefined) el.value = p[c];
+    var el=document.getElementById(c); if(el && p[c]!==undefined) el.value=p[c];
   });
 
-  // ── Responsáveis ────────────────────────────────────────────────
+  // ── Responsáveis
   if(p.resp){
-    var r = p.resp;
     var rfMap = {
-      't_pat_n': r.toledo?.pat?.n, 't_pat_e': r.toledo?.pat?.e,
-      't_ger_n': r.toledo?.ger?.n, 't_ger_e': r.toledo?.ger?.e,
-      't_ti_n':  r.toledo?.ti?.n,  't_ti_e':  r.toledo?.ti?.e,
-      't_at_n':  r.toledo?.at?.n,  't_at_e':  r.toledo?.at?.e,
-      't_rps_n': r.toledo?.rps?.n, 't_rps_e': r.toledo?.rps?.e,
-      'c_pat_n': r.cliente?.pat?.n,'c_pat_e': r.cliente?.pat?.e,
-      'c_ger_n': r.cliente?.ger?.n,'c_ger_e': r.cliente?.ger?.e,
-      'c_ti_n':  r.cliente?.ti?.n, 'c_ti_e':  r.cliente?.ti?.e,
-      'c_op_n':  r.cliente?.op?.n, 'c_op_e':  r.cliente?.op?.e
+      't_pat_n':p.resp.toledo?.pat?.n, 't_pat_e':p.resp.toledo?.pat?.e,
+      't_ger_n':p.resp.toledo?.ger?.n, 't_ger_e':p.resp.toledo?.ger?.e,
+      't_ti_n': p.resp.toledo?.ti?.n,  't_ti_e': p.resp.toledo?.ti?.e,
+      't_at_n': p.resp.toledo?.at?.n,  't_at_e': p.resp.toledo?.at?.e,
+      't_rps_n':p.resp.toledo?.rps?.n, 't_rps_e':p.resp.toledo?.rps?.e,
+      'c_pat_n':p.resp.cliente?.pat?.n,'c_pat_e':p.resp.cliente?.pat?.e,
+      'c_ger_n':p.resp.cliente?.ger?.n,'c_ger_e':p.resp.cliente?.ger?.e,
+      'c_ti_n': p.resp.cliente?.ti?.n, 'c_ti_e': p.resp.cliente?.ti?.e,
+      'c_op_n': p.resp.cliente?.op?.n, 'c_op_e': p.resp.cliente?.op?.e
     };
     Object.keys(rfMap).forEach(function(k){
-      var el = document.getElementById(k);
-      if(el && rfMap[k] !== undefined) el.value = rfMap[k];
+      var el=document.getElementById(k); if(el && rfMap[k]) el.value=rfMap[k];
     });
   }
 
-  // ── PCs ─────────────────────────────────────────────────────────
-  if(p.pcs && p.pcs.length){
-    p.pcs.filter(function(pc){ return pc.num && pc.num.trim()!==''; }).forEach(function(pc){
-      addPC(pc.num||'', pc.name||'', pc.tipo||'outro', pc.equip||{}, pc.desc||'', false);
-    });
-    // Garantir que os valores de pcnum/pcname estao corretos após addPC
-    // (changePCTypeEl pode ter sobrescrito algum valor)
-    var validPCs = p.pcs.filter(function(pc){ return pc.num && pc.num.trim()!==''; });
+  // ══ PASSO 3: PCs — criar e garantir valores corretos ══════════
+  var validPCs = (p.pcs||[]).filter(function(pc){ return pc.num && pc.num.trim()!==''; });
+  validPCs.forEach(function(pc){
+    addPC(pc.num||'', pc.name||'', pc.tipo||'outro', pc.equip||{}, pc.desc||'', false);
+  });
+  // Forçar valores corretos (changePCTypeEl pode sobrescrever)
+  setTimeout(function(){
     pcItems.forEach(function(realId, idx){
-      var pc = validPCs[idx];
-      if(!pc) return;
-      var numEl  = document.getElementById('pcnum_'+realId);
-      var nameEl = document.getElementById('pcname_'+realId);
-      if(numEl  && numEl.value  !== pc.num)  numEl.value  = pc.num;
-      if(nameEl && nameEl.value !== pc.name) nameEl.value = pc.name;
+      var pc = validPCs[idx]; if(!pc) return;
+      var ne = document.getElementById('pcnum_'+realId);
+      var me = document.getElementById('pcname_'+realId);
+      if(ne && ne.value !== pc.num)  ne.value = pc.num;
+      if(me && me.value !== pc.name) me.value = pc.name||'';
     });
-    // operações por PC aplicadas no bloco final de applyPayload
-  }
+    refreshHWQuickPC();
 
-  // ── Software ────────────────────────────────────────────────────
+    // ══ PASSO 4: Operações por PC ═══════════════════════════════
+    buildOpPCList();
+    if(p.opsByPC && validPCs.length){
+      // Mapear por número do PC
+      var numToOps = {};
+      validPCs.forEach(function(pc, idx){
+        var savedId = Object.keys(p.opsByPC)[idx];
+        if(savedId) numToOps[pc.num] = p.opsByPC[savedId]||[];
+      });
+      pcItems.forEach(function(realId){
+        var pcNum = document.getElementById('pcnum_'+realId)?.value||'';
+        var ops = numToOps[pcNum]; if(!ops) return;
+        var card = document.querySelector('.op-pc-card[data-pcid="'+realId+'"]');
+        if(!card) return;
+        card.querySelectorAll('.op-badge').forEach(function(b){
+          b.classList.toggle('on', ops.indexOf(b.textContent)>=0);
+        });
+      });
+    }
+
+    // ══ PASSO 5: Hardware — restaurar PC correto ════════════════
+    if(p.hw && p.hw.length){
+      p.hw.forEach(function(h){
+        // h.pc é a string "PC01 — Nome" ou "PC01 / Nome"
+        // Encontrar o ID real pelo número do PC
+        var pcLabel = h.pc||'';
+        var pcNum = pcLabel.split(/[\s\/—-]/)[0].trim();
+        var realPcId = '';
+        pcItems.forEach(function(id){
+          var n = document.getElementById('pcnum_'+id)?.value||'';
+          if(n === pcNum) realPcId = id;
+        });
+        addHW(realPcId ? (document.getElementById('pcnum_'+realPcId)?.value||'') + ' — ' + (document.getElementById('pcname_'+realPcId)?.value||'') : pcLabel,
+               h.code||'', h.qty||'1');
+      });
+    }
+
+    if(typeof updateHeader==='function') updateHeader();
+    if(typeof buildPreview==='function') buildPreview();
+  }, 200);
+
+  // ══ PASSO 6: Software ══════════════════════════════════════════
   if(p.sw && p.sw.length){
     p.sw.forEach(function(s){ addSW(s.code||'', s.desc||'', s.qty||'1'); });
   }
 
-  // ── Hardware ────────────────────────────────────────────────────
-  if(p.hw && p.hw.length){
-    p.hw.forEach(function(h){ addHW(h.pc||'', h.code||'', h.qty||'1'); });
-  }
-
-  // ── Fluxos ──────────────────────────────────────────────────────
+  // ══ PASSO 7: Fluxos ═══════════════════════════════════════════
   if(p.fluxos && p.fluxos.length){
     p.fluxos.forEach(function(f){
       var seq = [];
-      if(f.seq && Array.isArray(f.seq) && f.seq.length > 0){
-        // Formato novo: array [{num,name},...]
+      if(f.seq && Array.isArray(f.seq) && f.seq.length>0){
         seq = f.seq;
-      } else if(f.pcs && typeof f.pcs === 'string' && f.pcs.trim() !== ''){
-        // Fallback: reconstruir a partir da string "PC01 (Nome) → PC02 (Nome)"
-        // Aceita tanto '→' quanto '->'
-        var sep = f.pcs.indexOf('→') >= 0 ? '→' : '->';
-        if(f.pcs.indexOf(sep) >= 0){
-          seq = f.pcs.split(sep).map(function(s){
-            s = s.trim();
-            var m = s.match(/^([A-Za-z0-9_-]+)\s*(?:\(([^)]*)\))?/);
-            return m ? {num: m[1].trim(), name: (m[2]||'').trim()} : {num: s, name: ''};
-          }).filter(function(s){ return s.num; });
-        }
+      } else if(f.pcs && typeof f.pcs==='string' && f.pcs.trim()){
+        var sep = f.pcs.indexOf('→')>=0 ? '→' : '->';
+        seq = f.pcs.split(sep).map(function(s){
+          s = s.trim();
+          var pi = s.indexOf('(');
+          if(pi>0) return {num:s.substring(0,pi).trim(), name:s.substring(pi+1).replace(')','').trim()};
+          return {num:s, name:''};
+        }).filter(function(s){ return s.num; });
       }
       addFluxo(f.code||'', f.name||'', seq, f.type||'');
     });
   }
-  var elFlxObs = document.getElementById('flxObs');
-  if(elFlxObs && p.flxObs) elFlxObs.value = p.flxObs;
+  var elFlxObs=document.getElementById('flxObs');
+  if(elFlxObs && p.flxObs) elFlxObs.value=p.flxObs;
 
-  // ── ERP ─────────────────────────────────────────────────────────
+  // ══ PASSO 8: ERP ══════════════════════════════════════════════
   if(p.erp){
     if(p.erp.tipo) setERP(p.erp.tipo);
-    ['erpName','erpVendor','erpResp','txtFolder','btSGBD','btBanco','btTabelas'].forEach(function(k){
-      var el = document.getElementById(k);
-      if(el && p.erp[k.replace('erp','').toLowerCase()] !== undefined) el.value = p.erp[k.replace('erp','').toLowerCase()]||'';
-    });
-    // Restaurar nome/vendor diretamente
-    if(document.getElementById('erpName') && p.erp.nome) document.getElementById('erpName').value = p.erp.nome;
-    if(document.getElementById('erpVendor') && p.erp.vendor) document.getElementById('erpVendor').value = p.erp.vendor;
-    if(document.getElementById('erpResp') && p.erp.resp) document.getElementById('erpResp').value = p.erp.resp;
-    // Modo WS
+    if(document.getElementById('erpName') && p.erp.nome) document.getElementById('erpName').value=p.erp.nome;
+    if(document.getElementById('erpVendor') && p.erp.vendor) document.getElementById('erpVendor').value=p.erp.vendor;
+    if(document.getElementById('erpResp') && p.erp.resp) document.getElementById('erpResp').value=p.erp.resp;
     if(p.erp.mode){
-      var wsBtns = document.getElementById('wsMode')?.querySelectorAll('.tg-btn')||[];
-      wsBtns.forEach(function(b){ if(b.textContent.trim()===p.erp.mode){ setExcl(b,'wsMode'); } });
+      var wsBtns=document.getElementById('wsMode')?.querySelectorAll('.tg-btn')||[];
+      wsBtns.forEach(function(b){ if(b.textContent.trim()===p.erp.mode) setExcl(b,'wsMode'); });
     }
-    // Métodos WS
-    if(p.erp.methods) p.erp.methods.forEach(function(m){
-      var el = document.getElementById(m);
-      if(el && !el.classList.contains('on')) el.classList.add('on');
+    if(p.erp.methods) p.erp.methods.forEach(function(m){ var el=document.getElementById(m); if(el&&!el.classList.contains('on')) el.classList.add('on'); });
+    if(p.erp.txtInterfaces) p.erp.txtInterfaces.forEach(function(m){ var el=document.getElementById(m); if(el&&!el.classList.contains('on')) el.classList.add('on'); });
+    ['txtFolder','btSGBD','btBanco','btTabelas'].forEach(function(k){
+      var el=document.getElementById(k); if(el && p.erp[k]) el.value=p.erp[k];
     });
-    // Interfaces TXT
-    if(p.erp.txtInterfaces) p.erp.txtInterfaces.forEach(function(m){
-      var el = document.getElementById(m);
-      if(el && !el.classList.contains('on')) el.classList.add('on');
-    });
-    if(document.getElementById('txtFolder') && p.erp.txtFolder) document.getElementById('txtFolder').value = p.erp.txtFolder;
-    if(document.getElementById('btSGBD') && p.erp.btSGBD) document.getElementById('btSGBD').value = p.erp.btSGBD;
-    if(document.getElementById('btBanco') && p.erp.btBanco) document.getElementById('btBanco').value = p.erp.btBanco;
-    if(document.getElementById('btTabelas') && p.erp.btTabelas) document.getElementById('btTabelas').value = p.erp.btTabelas;
   }
 
-  // ── Operações dos PCs (tg_* toggles) ────────────────────────────
+  // ══ PASSO 9: Operações gerais (toggles) ═══════════════════════
   if(p.op){
-    var tgMap = {
-      'tg_cad':p.op.cadTipo, 'tg_tag':p.op.tagTipo, 'tg_pes':p.op.pesTipo,
-      'tg_tol':p.op.tolTipo, 'tg_bloq':p.op.bloqTipo, 'tg_tiq':p.op.tiqTipo,
-      'tg_saida':p.op.saidaTipo
-    };
+    var tgMap={'tg_cad':p.op.cadTipo,'tg_tag':p.op.tagTipo,'tg_pes':p.op.pesTipo,
+               'tg_tol':p.op.tolTipo,'tg_bloq':p.op.bloqTipo,'tg_tiq':p.op.tiqTipo,'tg_saida':p.op.saidaTipo};
     Object.keys(tgMap).forEach(function(gid){
       if(!tgMap[gid]) return;
-      var btns = document.getElementById(gid)?.querySelectorAll('.tg-btn')||[];
-      btns.forEach(function(b){ if(b.textContent.trim()===tgMap[gid]) setExcl(b,gid); });
+      (document.getElementById(gid)?.querySelectorAll('.tg-btn')||[]).forEach(function(b){
+        if(b.textContent.trim()===tgMap[gid]) setExcl(b,gid);
+      });
     });
-    ['op_cad_obs','op_tol_val','op_tiq_campos','op_saida_obs','op_especiais'].forEach(function(k){
-      var el = document.getElementById(k);
-      var val = p.op[k.replace('op_','').replace(/_obs|_val|_campos/,'').replace('cad','cad')+'Obs']||
-                p.op[k.replace('op_','').replace('_val','Val').replace('_campos','Campos')]||
-                p.op[k.replace('op_','')+'Obs']||'';
-      // mapeamento direto
-      var directMap = {
-        'op_cad_obs': p.op.cadObs,
-        'op_tol_val': p.op.tolVal,
-        'op_tiq_campos': p.op.tiqCampos,
-        'op_saida_obs': p.op.saidaObs,
-        'op_especiais': p.op.especiais
-      };
-      if(el && directMap[k]) el.value = directMap[k];
+    var opDirect={'op_cad_obs':p.op.cadObs,'op_tol_val':p.op.tolVal,
+                  'op_tiq_campos':p.op.tiqCampos,'op_saida_obs':p.op.saidaObs,'op_especiais':p.op.especiais};
+    Object.keys(opDirect).forEach(function(k){
+      var el=document.getElementById(k); if(el && opDirect[k]) el.value=opDirect[k];
     });
   }
 
-  // ── Módulos ─────────────────────────────────────────────────────
+  // ══ PASSO 10: Módulos ══════════════════════════════════════════
   if(p.mods){
-    var modMap = {
-      'mod_fila':p.mods.fila, 'mod_inspecao':p.mods.inspecao, 'mod_tulha':p.mods.tulha,
-      'mod_moega':p.mods.moega, 'mod_yms':p.mods.yms, 'mod_agend':p.mods.agend,
-      'mod_cloud':p.mods.cloud, 'mod_facil':p.mods.facil, 'mod_gw':p.mods.gw,
-      'mod_ad':p.mods.ad, 'mod_relatorio':p.mods.relatorio, 'mod_campos':p.mods.campos
-    };
+    var modMap={'mod_fila':p.mods.fila,'mod_inspecao':p.mods.inspecao,'mod_tulha':p.mods.tulha,
+                'mod_moega':p.mods.moega,'mod_yms':p.mods.yms,'mod_agend':p.mods.agend,
+                'mod_cloud':p.mods.cloud,'mod_facil':p.mods.facil,'mod_gw':p.mods.gw,
+                'mod_ad':p.mods.ad,'mod_relatorio':p.mods.relatorio,'mod_campos':p.mods.campos};
     Object.keys(modMap).forEach(function(mod){
-      var el = document.getElementById(mod);
-      if(!el) return;
-      var shouldBeOn = !!modMap[mod];
-      var isCurrentlyOn = el.classList.contains('on');
-      if(shouldBeOn !== isCurrentlyOn) toggleMod(mod);
+      var el=document.getElementById(mod); if(!el) return;
+      if(!!modMap[mod] !== el.classList.contains('on')) toggleMod(mod);
     });
   }
 
-  // ── Filas ────────────────────────────────────────────────────────
+  // ══ PASSO 11: Filas e Pátios ═══════════════════════════════════
   if(p.filas && p.filas.length && p.mods && p.mods.fila){
-    // Limpar filas existentes já adicionadas pelo toggleMod
     filaItems.forEach(function(id){ document.getElementById('fl_'+id)?.remove(); }); filaItems=[];
-    p.filas.forEach(function(f){ addFila(f.name||'', f.cred||'', f.deb||''); });
+    p.filas.forEach(function(f){ addFila(f.name||'',f.cred||'',f.deb||''); });
   }
-
-  // ── Pátios ───────────────────────────────────────────────────────
   if(p.patios && p.patios.length && p.mods && p.mods.yms){
-    // Limpar pátios existentes já adicionados pelo toggleMod
     patioItems.forEach(function(id){ document.getElementById('pt_'+id)?.remove(); }); patioItems=[];
-    p.patios.forEach(function(pt){ addPatio(pt.name||'', pt.cred||'', pt.deb||'', pt.max||'100'); });
+    p.patios.forEach(function(pt){ addPatio(pt.name||'',pt.cred||'',pt.deb||'',pt.max||'100'); });
   }
 
-  // ── Obs finais ───────────────────────────────────────────────────
-  var elObs = document.getElementById('obsFinais');
-  if(elObs && p.obsFinais) elObs.value = p.obsFinais;
-
-  // Forçar buildOpPCList agora para popular o container com os IDs corretos
-  // Isso evita duplicação quando o usuário navegar para a seção 5
-  setTimeout(function(){
-    if(typeof buildOpPCList === 'function') buildOpPCList();
-    // Restaurar operações marcadas por PC
-    // Mapear por numero do PC (mais confiável que índice)
-    if(p.opsByPC && p.pcs){
-      // Montar mapa: numero_pc -> ops_salvas
-      var numToOps = {};
-      var savedIds = Object.keys(p.opsByPC);
-      savedIds.forEach(function(savedId, idx){
-        var pc = p.pcs[idx];
-        if(pc && pc.num) numToOps[pc.num] = p.opsByPC[savedId]||[];
-      });
-      // Aplicar nos cards reais usando o numero do PC
-      pcItems.forEach(function(realId){
-        var pcNum = document.getElementById('pcnum_'+realId)?.value||'';
-        if(!pcNum || !numToOps[pcNum]) return;
-        var ops = numToOps[pcNum];
-        var card = document.querySelector('.op-pc-card[data-pcid="'+realId+'"]');
-        if(!card) return;
-        card.querySelectorAll('.op-badge').forEach(function(badge){
-          badge.classList.toggle('on', ops.indexOf(badge.textContent) >= 0);
-        });
-      });
-    }
-    if(typeof updateHeader === 'function') updateHeader();
-    if(typeof buildPreview === 'function') buildPreview();
-  }, 150);
+  // ══ PASSO 12: Obs finais ═══════════════════════════════════════
+  var elObs=document.getElementById('obsFinais');
+  if(elObs && p.obsFinais) elObs.value=p.obsFinais;
 }
-
-function openChangelog(){
-  var ov = document.getElementById('changelogOverlay');
-  ov.style.display = 'block';
-  ov.onclick = function(e){ if(e.target===ov) closeChangelog(); };
-  renderChangelog();
-}
-
-function closeChangelog(){
-  document.getElementById('changelogOverlay').style.display = 'none';
-}
-
-function renderChangelog(){
-  var body = document.getElementById('changelogBody');
-  body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Carregando…</div>';
-  var base = window.SERVER_URL || (window.location.origin === 'null' ? 'http://localhost:5555' : window.location.origin);
-  fetch(base + '/changelog')
-    .then(function(r){ return r.json(); })
-    .then(function(entries){
-      if(!entries || !entries.length){
-        body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Nenhuma entrada no changelog ainda.</div>';
-        return;
-      }
-      var catColors = {
-        'Novo recurso':  {bg:'rgba(0,180,100,.15)',  border:'rgba(0,180,100,.4)',  text:'#00b464'},
-        'Melhoria':      {bg:'rgba(0,120,255,.15)',  border:'rgba(0,120,255,.4)',  text:'#4d9fff'},
-        'Correcao de bug':{bg:'rgba(255,80,80,.15)', border:'rgba(255,80,80,.4)', text:'#ff6060'},
-        'Manutencao':    {bg:'rgba(160,160,160,.15)',border:'rgba(160,160,160,.4)',text:'#aaa'}
-      };
-      // Agrupar por versão
-      var byVersion = {};
-      entries.forEach(function(e){
-        if(!byVersion[e.versao]) byVersion[e.versao] = {data: e.data, items: []};
-        byVersion[e.versao].items.push(e);
-      });
-      var html = '';
-      Object.keys(byVersion).forEach(function(v){
-        var vData = byVersion[v];
-        html += '<div style="margin-bottom:28px">';
-        html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
-        html += '<span style="font-size:16px;font-weight:700;color:var(--text)">' + v + '</span>';
-        html += '<span style="font-size:12px;color:var(--text3)">' + (vData.data || '') + '</span>';
-        html += '<div style="flex:1;height:1px;background:var(--border)"></div>';
-        html += '</div>';
-        vData.items.forEach(function(item){
-          var c = catColors[item.categoria] || catColors['Manutencao'];
-          html += '<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;padding:10px 12px;background:var(--bg2);border-radius:8px;border-left:3px solid ' + c.border + '">';
-          html += '<span style="font-size:11px;padding:2px 8px;border-radius:20px;background:' + c.bg + ';color:' + c.text + ';border:1px solid ' + c.border + ';white-space:nowrap;margin-top:1px">' + item.categoria + '</span>';
-          html += '<div style="flex:1">';
-          html += '<div style="font-size:13px;color:var(--text)">' + item.descricao + '</div>';
-          if(item.responsavel) html += '<div style="font-size:11px;color:var(--text3);margin-top:3px">por ' + item.responsavel + '</div>';
-          html += '</div>';
-          html += '</div>';
-        });
-        html += '</div>';
-      });
-      body.innerHTML = html;
-    })
-    .catch(function(){
-      body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px">Não foi possível carregar o changelog.<br><small>Verifique se o arquivo changelog.json está na pasta do projeto.</small></div>';
-    });
-}
-
 function histExcluir(id, btn){
   if(!confirm('Excluir este projeto do histórico? Esta ação não pode ser desfeita.')) return;
   var base = (window.SERVER_URL || (window.location.origin === 'null' ? 'http://localhost:5555' : window.location.origin));
