@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.5",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "teste",
+    "responsavel": "patrik"
+  },
+  {
     "versao": "v1.0.4",
     "data": "2026-03-20",
     "categoria": "Melhoria",

@@ -1240,28 +1240,24 @@ function removePCFromFlx(fxId, idx){
 }
 
 function addFluxo(code, name, seqData, tipo){
-  code=code||''; name=name||''; seqData=seqData||'[]'; tipo=tipo||'Pesagem';
+  code=code||''; name=name||''; tipo=tipo||'Pesagem';
+  // Aceita seqData como array ou string JSON
+  var seq = [];
+  if(Array.isArray(seqData)){
+    seq = seqData;
+  } else {
+    try{ seq = JSON.parse(seqData||'[]'); } catch(e){ seq=[]; }
+  }
   var id=Date.now()+'_fx'; flxItems.push(id);
   var div=document.createElement('div'); div.className='flx-card'; div.id='fx_'+id;
   var tipoOpts=['Pesagem','Expedição','Recebimento','Interno','Visitante','Limpeza','Funcionário']
     .map(o=>'<option'+(o===tipo?' selected':'')+'>'+o+'</option>').join('');
   div.innerHTML=
-    '<div class="flx-head">'
-    +'<input type="text" id="fxcode_'+id+'" value="'+code+'" placeholder="FLX_REC" style="font-family:var(--mono);font-size:12px">'
-    +'<input type="text" id="fxname_'+id+'" value="'+name+'" placeholder="Nome do fluxo">'
-    +'<select id="fxtype_'+id+'" style="padding:6px 8px;font-size:12px">'+tipoOpts+'</select>'
-    +'<button class="btn-rm" onclick="rmFX(\''+id+'\')">&#215;</button>'
-    +'</div>'
-    +'<div class="flx-seq">'
-    +'<input type="hidden" id="flxseqdata_'+id+'" value="'+seqData.replace(/"/g,'&quot;')+'">'
-    +'<div id="flxpcs_'+id+'"></div>'
-    +'</div>';
+    '<div class="flx-head">'    +'<input type="text" id="fxcode_'+id+'" value="'+code+'" placeholder="FLX_REC" style="font-family:var(--mono);font-size:12px">'    +'<input type="text" id="fxname_'+id+'" value="'+name+'" placeholder="Nome do fluxo">'    +'<select id="fxtype_'+id+'" style="padding:6px 8px;font-size:12px">'+tipoOpts+'</select>'    +'<button class="btn-rm" onclick="rmFX(\''+id+'\')">&#215;</button>'    +'</div>'    +'<div class="flx-seq">'    +'<input type="hidden" id="flxseqdata_'+id+'" value="">'    +'<div id="flxpcs_'+id+'"></div>'    +'</div>';
   document.getElementById('flxList').appendChild(div);
-  var seq = [];
-  try{ seq=JSON.parse(seqData); }catch(e){}
+  document.getElementById('flxseqdata_'+id).value = JSON.stringify(seq);
   document.getElementById('flxpcs_'+id).innerHTML = buildFlxPCBtns(id, seq);
 }
-
 function rmFX(id){flxItems=flxItems.filter(x=>x!==id);document.getElementById('fx_'+id)?.remove();}
 
 
@@ -3277,7 +3273,8 @@ function applyPayload(p){
   // ── Fluxos ──────────────────────────────────────────────────────
   if(p.fluxos && p.fluxos.length){
     p.fluxos.forEach(function(f){
-      addFluxo(f.code||'', f.name||'', f.seq ? JSON.stringify(f.seq) : '[]', f.type||'');
+      // Passar seq diretamente como array (addFluxo aceita array ou string)
+      addFluxo(f.code||'', f.name||'', f.seq||[], f.type||'');
     });
   }
   var elFlxObs = document.getElementById('flxObs');
