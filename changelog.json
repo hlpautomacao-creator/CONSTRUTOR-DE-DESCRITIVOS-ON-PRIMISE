@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.8",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Correção na navegação lateral, correção na clonagem dos fluxos, correcao de PCs duplicados na sessao 6",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.7",
     "data": "2026-03-20",
     "categoria": "Correcao de bug",

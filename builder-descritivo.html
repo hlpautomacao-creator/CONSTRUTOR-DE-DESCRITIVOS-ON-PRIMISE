@@ -2591,7 +2591,16 @@ function resetarTudo(){
   document.getElementById('sec_filas').style.display='none';
   document.getElementById('sec_patios').style.display='none';
   setERP('ws');
-  goTo(0);
+  // Limpar classes 'done' e 'active' de todos os nav items
+  document.querySelectorAll('.nav-item').forEach(function(el){
+    el.classList.remove('done','active');
+  });
+  cur = 0;
+  document.querySelectorAll('.panel').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('panel0').classList.add('active');
+  document.getElementById('nav0').classList.add('active');
+  document.getElementById('pctBar').style.width='0%';
+  document.getElementById('pctTxt').textContent='0%';
   updateHeader();
   showToast('Projeto resetado — pronto para novo preenchimento','warn');
 }
@@ -3273,8 +3282,19 @@ function applyPayload(p){
   // ── Fluxos ──────────────────────────────────────────────────────
   if(p.fluxos && p.fluxos.length){
     p.fluxos.forEach(function(f){
-      // Passar seq diretamente como array (addFluxo aceita array ou string)
-      addFluxo(f.code||'', f.name||'', f.seq||[], f.type||'');
+      var seq = [];
+      if(f.seq && Array.isArray(f.seq) && f.seq.length > 0){
+        // Usar seq diretamente (formato novo: [{num,name},...])
+        seq = f.seq;
+      } else if(f.pcs && typeof f.pcs === 'string' && f.pcs.indexOf('→') >= 0){
+        // Fallback: reconstruir seq a partir da string "PC01 (Nome) → PC02 (Nome)"
+        seq = f.pcs.split('→').map(function(s){
+          s = s.trim();
+          var m = s.match(/^(\S+)\s*(?:\(([^)]*)\))?/);
+          return m ? {num: m[1], name: m[2]||''} : {num: s, name: ''};
+        });
+      }
+      addFluxo(f.code||'', f.name||'', seq, f.type||'');
     });
   }
   var elFlxObs = document.getElementById('flxObs');
@@ -3381,20 +3401,24 @@ function applyPayload(p){
   setTimeout(function(){
     if(typeof buildOpPCList === 'function') buildOpPCList();
     // Restaurar operações marcadas por PC
-    if(p.opsByPC){
+    // Mapear por numero do PC (mais confiável que índice)
+    if(p.opsByPC && p.pcs){
+      // Montar mapa: numero_pc -> ops_salvas
+      var numToOps = {};
       var savedIds = Object.keys(p.opsByPC);
       savedIds.forEach(function(savedId, idx){
-        var realId = pcItems[idx];
-        if(!realId) return;
-        var ops = p.opsByPC[savedId]||[];
+        var pc = p.pcs[idx];
+        if(pc && pc.num) numToOps[pc.num] = p.opsByPC[savedId]||[];
+      });
+      // Aplicar nos cards reais usando o numero do PC
+      pcItems.forEach(function(realId){
+        var pcNum = document.getElementById('pcnum_'+realId)?.value||'';
+        if(!pcNum || !numToOps[pcNum]) return;
+        var ops = numToOps[pcNum];
         var card = document.querySelector('.op-pc-card[data-pcid="'+realId+'"]');
         if(!card) return;
         card.querySelectorAll('.op-badge').forEach(function(badge){
-          if(ops.indexOf(badge.textContent) >= 0){
-            badge.classList.add('on');
-          } else {
-            badge.classList.remove('on');
-          }
+          badge.classList.toggle('on', ops.indexOf(badge.textContent) >= 0);
         });
       });
     }
