@@ -1321,6 +1321,25 @@ function toggleOpBody(head){
 
 function toggleOpBadge(el){
   el.classList.toggle('on');
+  // Atualizar todos os dropdowns de filas e pátios após mudança de operações
+  refreshFilaPatioSelects();
+}
+
+function refreshFilaPatioSelects(){
+  // Atualizar selects de filas
+  filaItems.forEach(function(id){
+    var credSel = document.getElementById('flcred_'+id);
+    var debSel  = document.getElementById('fldeb_'+id);
+    if(credSel){ var v=credSel.value; credSel.innerHTML=buildPCSelectForFila(v); }
+    if(debSel){  var v=debSel.value;  debSel.innerHTML=buildPCSelectForFila(v);  }
+  });
+  // Atualizar selects de pátios
+  patioItems.forEach(function(id){
+    var credSel = document.getElementById('ptcred_'+id);
+    var debSel  = document.getElementById('ptdeb_'+id);
+    if(credSel){ var v=credSel.value; credSel.innerHTML=buildPCSelectForFila(v); }
+    if(debSel){  var v=debSel.value;  debSel.innerHTML=buildPCSelectForFila(v);  }
+  });
 }
 
 function getOpsByPC(pcId){
@@ -1352,9 +1371,13 @@ function buildPCSelectForFila(selected){
   pcItems.forEach(function(id){
     var num  = document.getElementById('pcnum_'+id)?.value||'';
     var name = document.getElementById('pcname_'+id)?.value||'';
-    var ops  = PC_OPS[document.getElementById('pctype_'+id)?.value||'outro']||[];
+    // Usar apenas as operações marcadas para este PC; fallback para todas do tipo
+    var ops  = getOpsByPC(id);
+    if(!ops || ops.length===0){
+      ops = PC_OPS[document.getElementById('pctype_'+id)?.value||'outro']||[];
+    }
     if(!num) return;
-    opts+='<optgroup label="'+num+(name?' — '+name:'')+'">';
+    opts+='<optgroup label="'+num+(name?' — '+name:'')+'">'; 
     ops.forEach(function(op){
       var val=num+' / '+op;
       opts+='<option value="'+val+'"'+(val===selected?' selected':'')+'>'+op+'</option>';
@@ -1363,7 +1386,6 @@ function buildPCSelectForFila(selected){
   });
   return opts;
 }
-
 function addFila(name, cred, deb){
   name=name||''; cred=cred||''; deb=deb||'';
   var id=Date.now()+'_fl'; filaItems.push(id);
