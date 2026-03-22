@@ -306,57 +306,209 @@ function buildFooter(docTitle) {
   });
 }
 
-// ── HTML simples → parágrafos ─────────────────────────────────────────────
+// ── Decodifica entidades HTML ─────────────────────────────────────────────
+function decodeHtml(str) {
+  return (str || '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h,16)));
+}
+
+// ── Extrai runs com formatação inline (bold, italic) ──────────────────────
+function parseInlineRuns(html, baseOpts = {}) {
+  const runs = [];
+  // Processar tags inline: <b>, <strong>, <i>, <em>, <u>
+  const parts = html.split(/(<\/?(?:b|strong|i|em|u)[^>]*>)/gi);
+  let bold = false, italic = false, underline = false;
+  for (const part of parts) {
+    if (/^<(b|strong)>/i.test(part)) { bold = true; continue; }
+    if (/^<\/(b|strong)>/i.test(part)) { bold = false; continue; }
+    if (/^<(i|em)>/i.test(part)) { italic = true; continue; }
+    if (/^<\/(i|em)>/i.test(part)) { italic = false; continue; }
+    if (/^<u>/i.test(part)) { underline = true; continue; }
+    if (/^<\/u>/i.test(part)) { underline = false; continue; }
+    // Strip any remaining tags
+    const text = decodeHtml(part.replace(/<[^>]+>/g, ''));
+    if (!text) continue;
+    runs.push(new TextRun({
+      text,
+      font: baseOpts.font || 'Arial',
+      size: baseOpts.size || 22,
+      bold: bold || baseOpts.bold || false,
+      italic: italic || baseOpts.italic || false,
+      underline: underline ? {} : undefined,
+      color: baseOpts.color || '000000'
+    }));
+  }
+  return runs.length ? runs : [new TextRun({ text: decodeHtml(html.replace(/<[^>]+>/g, '')), ...baseOpts })];
+}
+
+// ── Parse tabela HTML → docx Table ───────────────────────────────────────
+function parseHtmlTable(tableHtml) {
+  // Extrair todas as linhas
+  const rowMatches = [...tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+  if (!rowMatches.length) return null;
+
+  // Calcular número de colunas
+  let maxCols = 0;
+  const rowData = rowMatches.map(rm => {
+    const cells = [...rm[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)];
+    maxCols = Math.max(maxCols, cells.length);
+    return { cells, isHeader: /<th/i.test(rm[1]) };
+  });
+  if (maxCols === 0) return null;
+
+  const colW = Math.floor(CW / maxCols);
+  const colWidths = Array(maxCols).fill(colW);
+  colWidths[maxCols-1] = CW - colW * (maxCols - 1);
+
+  const docxRows = rowData.map((row, ri) => {
+    const isHdr = row.isHeader || ri === 0;
+    while (row.cells.length < maxCols) row.cells.push({ 1: '' });
+    const cells = row.cells.map((cm, ci) => {
+      const cellHtml = (cm[1] || '').trim();
+      const cellText = decodeHtml(cellHtml.replace(/<[^>]+>/g, ''));
+      return new TableCell({
+        width: { size: colWidths[ci], type: WidthType.DXA },
+        shading: { fill: isHdr ? C_AZUL_ESC : (ri % 2 === 0 ? C_BRANCO : 'F4F6FB'), type: ShadingType.CLEAR },
+        margins: { top: 80, bottom: 80, left: 120, right: 120 },
+        verticalAlign: VerticalAlign.CENTER,
+        children: [new Paragraph({
+          spacing: spacingPara(60, 60),
+          children: [new TextRun({
+            text: cellText || '\u2014',
+            font: 'Arial', size: 20,
+            bold: isHdr,
+            color: isHdr ? C_BRANCO : '000000'
+          })]
+        })]
+      });
+    });
+    return new TableRow({ tableHeader: isHdr, children: cells });
+  });
+
+  return new Table({
+    width: { size: CW, type: WidthType.DXA },
+    columnWidths: colWidths,
+    rows: docxRows
+  });
+}
+
+// ── HTML completo → array de elementos docx ───────────────────────────────
 function htmlToParas(html) {
   if (!html) return [];
   const paras = [];
 
-  // Remove script/style tags
+  // Remove script/style
   html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
   html = html.replace(/<style[\s\S]*?<\/style>/gi, '');
 
-  // Split on block tags
-  const blocks = html.split(/<\/?(?:div|p|h[1-6]|ul|ol|li|table|tr|td|th|br|hr)[^>]*>/gi);
+  const result = [];
 
-  for (let block of blocks) {
-    // Get tag type from context
-    const h1m = html.match(/<h1[^>]*>(.*?)<\/h1>/gi) || [];
-    const h2m = html.match(/<h2[^>]*>(.*?)<\/h2>/gi) || [];
-    const h3m = html.match(/<h3[^>]*>(.*?)<\/h3>/gi) || [];
+  // Processar tabelas primeiro (extrair e marcar posição)
+  // Usar tokenização sequencial
+  const tokens = [];
+  let pos = 0;
+  const tagRe = /<(\/?)(\w+)([^>]*)>/g;
+  let lastEnd = 0;
 
-    // Strip remaining HTML tags
-    const text = block.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '').trim();
-    if (!text) continue;
-    paras.push(para(text, { before: 40, after: 40 }));
+  // Tokenizar o HTML em blocos de alto nível
+  // Dividir por tags de bloco principais mantendo conteúdo interno
+  const blockRe = /<(h[1-6]|p|ul|ol|li|table|div|hr|br)(\s[^>]*)?>[\s\S]*?<\/\1>|<(hr|br)[^>]*\/?>/gi;
+  const seen = new Set();
+  let lastIdx = 0;
+
+  // Extrair tabelas inteiras antes de processar o resto
+  const tableRe = /<table[\s\S]*?<\/table>/gi;
+  const tables = [];
+  let tMatch;
+  let htmlWithPlaceholders = html;
+  let tIdx = 0;
+  while ((tMatch = tableRe.exec(html)) !== null) {
+    const placeholder = `__TABLE_${tIdx}__`;
+    tables.push({ placeholder, html: tMatch[0] });
+    htmlWithPlaceholders = htmlWithPlaceholders.replace(tMatch[0], placeholder);
+    tIdx++;
   }
 
-  // Better approach: use regex to find headings and paragraphs
-  const result = [];
-  const allTags = html.matchAll(/<(h[1-6]|p|li|div)[^>]*>([\s\S]*?)<\/\1>/gi);
-  const seen = new Set();
+  // Agora processar o HTML sem tabelas
+  // Dividir em segmentos por tags de bloco
+  const segments = htmlWithPlaceholders.split(/(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>|<p[^>]*>[\s\S]*?<\/p>|<ul[^>]*>[\s\S]*?<\/ul>|<ol[^>]*>[\s\S]*?<\/ol>|__TABLE_\d+__)/gi).filter(s => s.trim());
 
-  for (const m of allTags) {
-    const tag = m[1].toLowerCase();
-    const content = m[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#\d+;/g, '').trim();
-    const key = tag + '|' + content.slice(0, 50);
-    if (!content || seen.has(key)) continue;
-    seen.add(key);
+  for (const seg of segments) {
+    const s = seg.trim();
+    if (!s) continue;
 
-    if (tag === 'h1') result.push(h1(content));
-    else if (tag === 'h2') result.push(h2(content));
-    else if (tag === 'h3') result.push(h3(content));
-    else if (tag === 'li') result.push(new Paragraph({
-      spacing: spacingPara(20, 20),
-      numbering: { reference: 'bullets', level: 0 },
-      children: [new TextRun({ text: content, font: 'Arial', size: 22 })]
-    }));
-    else result.push(new Paragraph({
+    // Tabela placeholder
+    const tph = s.match(/^__TABLE_(\d+)__$/);
+    if (tph) {
+      const tbl = parseHtmlTable(tables[parseInt(tph[1])].html);
+      if (tbl) { result.push(emptyPara(20,10)); result.push(tbl); result.push(emptyPara(20,20)); }
+      continue;
+    }
+
+    // H1
+    const h1m = s.match(/^<h1[^>]*>([\s\S]*?)<\/h1>$/i);
+    if (h1m) {
+      const text = decodeHtml(h1m[1].replace(/<[^>]+>/g,''));
+      if (text) result.push(h1(text));
+      continue;
+    }
+    // H2
+    const h2m = s.match(/^<h2[^>]*>([\s\S]*?)<\/h2>$/i);
+    if (h2m) {
+      const text = decodeHtml(h2m[1].replace(/<[^>]+>/g,''));
+      if (text) result.push(h2(text));
+      continue;
+    }
+    // H3
+    const h3m = s.match(/^<h3[^>]*>([\s\S]*?)<\/h3>$/i);
+    if (h3m) {
+      const text = decodeHtml(h3m[1].replace(/<[^>]+>/g,''));
+      if (text) result.push(h3(text));
+      continue;
+    }
+
+    // UL/OL — processar LIs
+    const ulm = s.match(/^<(?:ul|ol)[^>]*>([\s\S]*?)<\/(?:ul|ol)>$/i);
+    if (ulm) {
+      const lis = [...ulm[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)];
+      for (const li of lis) {
+        const runs = parseInlineRuns(li[1]);
+        if (runs.length) result.push(new Paragraph({
+          spacing: spacingPara(20, 20),
+          numbering: { reference: 'bullets', level: 0 },
+          children: runs
+        }));
+      }
+      continue;
+    }
+
+    // P
+    const pm = s.match(/^<p[^>]*>([\s\S]*?)<\/p>$/i);
+    if (pm) {
+      const inner = pm[1].trim();
+      if (!inner) continue;
+      const runs = parseInlineRuns(inner);
+      if (runs.length) result.push(new Paragraph({
+        alignment: AlignmentType.JUSTIFY,
+        spacing: spacingPara(40, 40),
+        children: runs
+      }));
+      continue;
+    }
+
+    // Texto puro / fallback
+    const text = decodeHtml(s.replace(/<[^>]+>/g,'').trim());
+    if (text && text.length > 1) result.push(new Paragraph({
       alignment: AlignmentType.JUSTIFY,
       spacing: spacingPara(40, 40),
-      children: [new TextRun({ text: content, font: 'Arial', size: 22 })]
+      children: [new TextRun({ text, font: 'Arial', size: 22 })]
     }));
   }
-  return result.length > 0 ? result : paras;
+
+  return result;
 }
 
 // ── Construtor principal ──────────────────────────────────────────────────
