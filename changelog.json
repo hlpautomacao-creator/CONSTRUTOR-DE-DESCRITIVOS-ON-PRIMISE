@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.23",
+    "data": "2026-03-22",
+    "categoria": "Correcao de bug",
+    "descricao": "Correção das imagens na capa",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.22",
     "data": "2026-03-20",
     "categoria": "Manutencao",
