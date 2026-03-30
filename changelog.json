@@ -1,5 +1,19 @@
 [
   {
+    "versao": "v1.0.26",
+    "data": "2026-03-30",
+    "categoria": "Melhoria",
+    "descricao": "Ajustes no .docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.25",
+    "data": "2026-03-30",
+    "categoria": "Melhoria",
+    "descricao": "Capa: ratio Guardian corrigido (0.418), logo cliente inserido após tabela CT/OV (~5cm), espaçamentos aumentados (40→120, 80→160), data convertida automaticamente para dd/mm/yyyy",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.24",
     "data": "2026-03-22",
     "categoria": "Manutencao",

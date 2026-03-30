@@ -1,3 +1,3 @@
 @echo off
-cd /d C:\construtor_descritivo
+cd /d C:\Users\patrikr\construtor_descritivo
 python atualizar.py

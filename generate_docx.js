@@ -244,6 +244,32 @@ function imgPara(b64str, wCm, caption = '', opts = {}) {
   }
 }
 
+// ── Lê dimensões reais de PNG ou JPEG ────────────────────────────────────
+function getImageAspectRatio(buf, ext) {
+  try {
+    if (ext === 'png') {
+      const w = buf.readUInt32BE(16);
+      const h = buf.readUInt32BE(20);
+      if (w > 0 && h > 0) return h / w;
+    } else {
+      // JPEG: percorre segmentos até encontrar SOF0-SOF3 / SOF5-SOF7 / SOF9-SOF11
+      let i = 2;
+      while (i + 4 < buf.length) {
+        if (buf[i] !== 0xFF) break;
+        const marker = buf[i + 1];
+        const segLen = buf.readUInt16BE(i + 2);
+        if (marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+          const h = buf.readUInt16BE(i + 5);
+          const w = buf.readUInt16BE(i + 7);
+          if (w > 0 && h > 0) return h / w;
+        }
+        i += 2 + segLen;
+      }
+    }
+  } catch (e) {}
+  return 0.5; // fallback: proporção 2:1
+}
+
 // ── Cabeçalho: logo cliente (esq) + logo PRIX (dir) ──────────────────────
 function buildHeader(clientLogoB64, prixLogoB64) {
   const children = [];
@@ -511,6 +537,13 @@ function htmlToParas(html) {
   return result;
 }
 
+// ── Converte yyyy-mm-dd → dd/mm/yyyy (mantém outros formatos intactos) ────
+function fmtDate(d) {
+  if (!d) return d;
+  const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
+}
+
 // ── Construtor principal ──────────────────────────────────────────────────
 async function buildDoc(data) {
   const cn    = (data.clientName   || '').toUpperCase();
@@ -522,7 +555,7 @@ async function buildDoc(data) {
   const ctCl  = data.ctCloud       || '';
   const analyst = data.analystName || '';
   const rev   = data.docRevision   || 'Rev00';
-  const revDate = data.docDate     || '';
+  const revDate = fmtDate(data.docDate || '');
   const revDesc = data.revDesc     || 'Geração do documento';
   const mods  = data.mods          || {};
   const imgs  = data.guardianImgs  || {};
@@ -542,21 +575,21 @@ async function buildDoc(data) {
 
   // Banner Guardian
   if (imgs.guardian_capa) {
-    const bannerParas = imgPara(imgs.guardian_capa, 17.8, '', { before: 0, after: 120 });
+    const bannerParas = imgPara(imgs.guardian_capa, 17.8, '', { before: 0, after: 120, hCm: 7.44 });
     if (bannerParas) capaContent.push(...bannerParas);
   }
 
   // Título
   capaContent.push(new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: spacingPara(120, 40),
+    spacing: spacingPara(120, 120),
     children: [new TextRun({ text: 'DESCRITIVO FUNCIONAL', font: 'Cambria', size: 40, bold: true, color: C_AZUL_ESC })]
   }));
 
   // Subtítulo
   capaContent.push(new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: spacingPara(0, 80),
+    spacing: spacingPara(0, 160),
     children: [new TextRun({ text: 'GUARDIAN PRO \u2014 Software para Gerenciamento de Operações de Pesagem', font: 'Cambria', size: 26, color: '222222' })]
   }));
 
@@ -572,14 +605,14 @@ async function buildDoc(data) {
   if (cu) {
     capaContent.push(new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: spacingPara(0, 40),
+      spacing: spacingPara(0, 120),
       children: [new TextRun({ text: cu, font: 'Cambria', size: 26, color: '444444' })]
     }));
   }
 
   // Foto do cliente
   if (clientImgb64) {
-    const pars = imgPara(clientImgb64, 16, '', { before: 40, after: 40 });
+    const pars = imgPara(clientImgb64, 16, '', { before: 120, after: 120 });
     if (pars) capaContent.push(...pars);
   }
 
@@ -604,6 +637,22 @@ async function buildDoc(data) {
     ]
   }));
 
+  // Logo do cliente na capa (após tabela CT/OV), ~5cm altura, centralizado
+  if (clientLogob64) {
+    try {
+      const b64cov = clientLogob64.includes('base64,') ? clientLogob64.split('base64,')[1] : clientLogob64;
+      const bufCov = Buffer.from(b64cov, 'base64');
+      const extCov = clientLogob64.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+      const ratio  = getImageAspectRatio(bufCov, extCov);           // h/w
+      const hCov   = 5.0;                                           // altura fixa ~5cm
+      const wCov   = Math.min(hCov / ratio, 14.0);                  // largura proporcional, máx 14cm
+      const covPars = imgPara(clientLogob64, wCov, '', { before: 80, after: 40, hCm: hCov });
+      if (covPars) capaContent.push(...covPars);
+    } catch (e) {
+      process.stderr.write(`Logo capa falhou: ${e.message}\n`);
+    }
+  }
+
   // Filial e segmento
   const infoLine = [filial ? `FILIAL(IS): ${filial.toUpperCase()}` : '', seg ? `SEGMENTO: ${seg.toUpperCase()}` : ''].filter(Boolean).join('   |   ');
   if (infoLine) {
@@ -617,7 +666,7 @@ async function buildDoc(data) {
   // URL
   capaContent.push(new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: spacingPara(40, 60),
+    spacing: spacingPara(120, 60),
     children: [new ExternalHyperlink({
       link: 'http://www.toledobrasil.com/produto/guardian',
       children: [new TextRun({ text: 'www.toledobrasil.com/produto/guardian', font: 'Cambria', size: 20, color: C_AZUL_MED })]

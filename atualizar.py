@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import subprocess, sys, json, datetime, os
 
-os.chdir(r"C:\construtor_descritivo")
+os.chdir(r"C:\Users\patrikr\construtor_descritivo")
 
 def run(cmd):
     return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout.strip()
