@@ -39,18 +39,22 @@ print("  Arquivos alterados:")
 git("status --short")
 print()
 
+changelog_data = []
 try:
     with open("changelog.json", "r", encoding="utf-8") as f:
-        changelog = json.load(f)
-    ultima = changelog[0]["versao"] if changelog else "v1.0.0"
-except:
-    ultima = "v1.0.0"
+        changelog_data = json.load(f)
+    if not isinstance(changelog_data, list):
+        changelog_data = []
+except (FileNotFoundError, json.JSONDecodeError, IOError):
+    pass  # changelog_data permanece []
+
+ultima = changelog_data[0]["versao"] if changelog_data else "v1.0.0"
 
 try:
     partes = ultima.lstrip("v").split(".")
     prox = "v{}.{}.{}".format(partes[0], partes[1], int(partes[2]) + 1)
-except:
-    prox = "v1.0.1"
+except Exception:
+    prox = "v{}.{}.1".format(partes[0], partes[1]) if 'partes' in dir() else "v1.0.1"
 
 print("  Ultima versao : " + ultima)
 print("  Proxima versao: " + prox)
@@ -92,11 +96,8 @@ if confirma.upper() != "S":
     input("  Pressione ENTER para sair...")
     sys.exit(0)
 
-try:
-    with open("changelog.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-except:
-    data = []
+# Reutiliza o changelog já carregado no início — nunca faz segunda leitura
+data = changelog_data
 
 data.insert(0, {
     "versao": versao,

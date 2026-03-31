@@ -1,5 +1,19 @@
 [
   {
+    "versao": "v1.0.33",
+    "data": "2026-03-31",
+    "categoria": "Correcao de bug",
+    "descricao": "changelog.json truncado corrigido (v1.0.1/v1.0.0 restaurados); atualizar.py refatorado para leitura unica do changelog; secao Perfil do Cliente movida para pagina 4; numeracao corrigida (Fluxos=7, ERP=8, PCs a partir de 9",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.32",
+    "data": "2026-03-31",
+    "categoria": "Correcao de bug",
+    "descricao": "Seção '1) Perfil do Cliente' movida para página 4 (logo após Índice): removida seção duplicada antes do H1 em htmlToParas, heading convertido para h1() com numeração no sumário, adicionado conteúdo de referências documentais (OV/CT). Seção 'Principais Documentos' removida do builder HTML. Numeração corrigida: Fluxos=7, ERP=8, operações PC a partir de 9.",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.31",
     "data": "2026-03-31",
     "categoria": "Correcao de bug",

@@ -439,6 +439,10 @@ function htmlToParas(html) {
     }
   }
 
+  // Strip conteúdo antes do primeiro <h1> (remove capa duplicada + tabelas Informações/Histórico)
+  const firstH1idx = html.search(/<h1[\s>]/i);
+  if (firstH1idx > 0) html = html.slice(firstH1idx);
+
   // Remove script/style
   html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
   html = html.replace(/<style[\s\S]*?<\/style>/gi, '');
@@ -724,9 +728,9 @@ async function buildDoc(data) {
   capaContent.push(pageBreak());
 
   // ═══════════════════════════════════════════════════════
-  // SEÇÃO FIXA: PERFIL DO CLIENTE (página dedicada, logo após o Índice)
+  // SEÇÃO 1: PERFIL DO CLIENTE (página dedicada, logo após o Índice)
   // ═══════════════════════════════════════════════════════
-  capaContent.push(sectionTitle('1) Perfil do Cliente'));
+  capaContent.push(h1('1) Perfil do Cliente'));
   capaContent.push(emptyPara(20, 20));
 
   // Imagem da unidade/planta do cliente (centralizada, largura máx 14cm)
@@ -757,6 +761,30 @@ async function buildDoc(data) {
       }));
     }
   }
+
+  // Referências documentais (OV / CT)
+  const clientNameRef = data.clientName || 'o Cliente';
+  capaContent.push(new Paragraph({
+    alignment: AlignmentType.JUSTIFY,
+    spacing: spacingPara(60, 40),
+    children: [new TextRun({ text: `Este descritivo foi elaborado com base nas reuniões de levantamento de requisitos realizadas entre a Toledo do Brasil e ${clientNameRef}, tendo como referência:`, font: 'Arial', size: 22 })]
+  }));
+  if (data.ctHardware) capaContent.push(new Paragraph({
+    spacing: spacingPara(20, 20),
+    numbering: { reference: 'bullets', level: 0 },
+    children: [
+      new TextRun({ text: 'Ordem de Venda / Contrato de Hardware e Serviços: ', font: 'Arial', size: 22 }),
+      new TextRun({ text: data.ctHardware, font: 'Arial', size: 22, bold: true })
+    ]
+  }));
+  if (data.ctCloud) capaContent.push(new Paragraph({
+    spacing: spacingPara(20, 20),
+    numbering: { reference: 'bullets', level: 0 },
+    children: [
+      new TextRun({ text: 'Contrato Licenciamento Cloud Prix: ', font: 'Arial', size: 22 }),
+      new TextRun({ text: data.ctCloud, font: 'Arial', size: 22, bold: true })
+    ]
+  }));
 
   capaContent.push(pageBreak());
 

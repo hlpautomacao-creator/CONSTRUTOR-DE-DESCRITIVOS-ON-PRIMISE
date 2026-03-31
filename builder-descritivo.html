@@ -1632,37 +1632,37 @@ function buildDoc(d){
   const txtIfMap={'txt_export':'<b>Exportação dos dados de pesagem</b> — Arquivos de exportação possuem dados que o Guardian disponibilizará para o sistema do cliente. Gerados na pasta de rede configurada na pesagem inicial e final.','txt_import':'<b>Importação — Pré-marcação (Cadastramento dos veículos)</b> — ERP envia arquivo texto com o pré-cadastro do veículo para o Guardian.','txt_altera':'<b>Importação — Alteração/Atualização do cadastro</b> — ERP envia arquivo texto com alterações ou atualizações das informações do veículo para o Guardian.','txt_cancela':'<b>Importação — Cancelar tíquete</b> — ERP envia arquivo texto com cancelamento do tíquete do veículo para o Guardian.','txt_bloqueio':'<b>Importação — Bloquear/Desbloquear tíquete</b> — ERP envia arquivo texto para desbloqueio do tíquete no Guardian após emissão da Nota Fiscal.'};
 
   const erpSection=d.erp.tipo==='ws'?`
-<h1>7) Fluxo de Dados — WebService</h1>
+<h1>8) Fluxo de Dados — WebService</h1>
 <p>A integração entre o sistema ERP do cliente (<b>${d.erp.nome||'ERP'}</b>) e o Guardian será realizada via <b>WebService</b> — modalidade <b>${d.erp.mode||'Modo Passivo'}</b>.</p>
-<h2>7.1) Definições da Interface WebService</h2>
+<h2>8.1)Definições da Interface WebService</h2>
 <p>O Guardian disponibiliza um WebService para que o ERP possa realizar chamadas de cadastro, alteração, cancelamento e consulta de tickets. No modo ativo, o Guardian também envia dados de pesagem encerrada diretamente ao ERP.</p>
-<h2>7.2) Possíveis interfaces utilizadas neste projeto</h2>
+<h2>8.2)Possíveis interfaces utilizadas neste projeto</h2>
 <ul>${d.erp.methods.map(m=>`<li>${erpMethodsMap[m]||m}</li>`).join('')}</ul>
-<h2>7.3) Monitor de integração</h2>
+<h2>8.3) Monitor de integração</h2>
 <p>Permite monitorar em tempo real o estado de todos os serviços de integração mantidos pelo Guardian. Exibe informações detalhadas de cada tipo de integração, possibilita intervir para iniciar ou parar remotamente serviços Windows, solicitar reenvio imediato de integrações com erro e visualizar informações de um ticket de pesagem com um clique.</p>
-<h2>7.4) Tabela LOG</h2>
+<h2>8.4) Tabela LOG</h2>
 <p>A tabela de logs registra toda atividade ocorrida no software Guardian — sucesso, falha de comunicação, falha de rede ou envio manual de dados, entre outros. Existem logs separados para a aplicação e periféricos. O Guardian disponibiliza tela de consulta de log de integração e reenvio de exportação (interface ativa).</p>
-${d.erp.resp?`<h2>7.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
+${d.erp.resp?`<h2>8.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 `
 :d.erp.tipo==='txt'?`
-<h1>7) Fluxo de Dados — Arquivo Texto (SIG)</h1>
+<h1>8) Fluxo de Dados — Arquivo Texto (SIG)</h1>
 <p>Abaixo descrevemos a interface de dados via arquivo texto entre o software Guardian de gerenciamento de pesagens da Toledo do Brasil e o sistema corporativo (ERP) <b>${d.erp.nome||''}</b>.</p>
-<h2>7.1) Definições da Interface Arquivo Texto</h2>
+<h2>8.1)Definições da Interface Arquivo Texto</h2>
 <ul>
   <li>Para a realização da integração padrão TXT, será utilizado o serviço <b>"SIG — Sistema de Integração Guardian"</b>;</li>
   <li>Algumas redes possuem regras de permissionamento para criação e manipulação de arquivos. Caso o sistema de validação de pastas encontre falhas, será necessário acessar as propriedades do serviço do SIG no Windows e informar um login de rede com permissões de escrita e execução;</li>
   <li>O arquivo texto com os dados das pesagens será exportado na pasta de rede: <b>${d.erp.txtFolder||'a definir com o cliente'}</b>;</li>
   <li>As estruturas de arquivo texto estão disponíveis no manual do usuário — TI — Interface de Dados Guardian.</li>
 </ul>
-<h2>7.2) Interfaces utilizadas neste projeto</h2>
+<h2>8.2)Interfaces utilizadas neste projeto</h2>
 <ul>${d.erp.txtInterfaces.map(m=>`<li>${txtIfMap[m]||m}</li>`).join('')}</ul>
-<h2>7.3) Monitor de integração</h2>
+<h2>8.3) Monitor de integração</h2>
 <p>Permite monitorar em tempo real o estado de todos os serviços de integração mantidos pelo Guardian. Ela também monitora cada uma das integrações em execução, exibindo informações detalhadas como de cada tipo de integração. Além da visualização das informações, é possível também intervir para iniciar ou parar remotamente serviços Windows, solicitar uma nova tentativa de reenvio imediato de uma integração que teve erro, visualizar informações de um ticket de pesagem com um clique, e acessar pastas e conteúdo de arquivos.</p>
-<h2>7.4) Tabela LOG</h2>
+<h2>8.4) Tabela LOG</h2>
 <p>A tabela de logs registra toda atividade ocorrida no software Guardian — sucesso, falha de comunicação, falha de rede ou envio manual de dados. Existem logs separados para a aplicação e periféricos.</p>
-${d.erp.resp?`<h2>7.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
+${d.erp.resp?`<h2>8.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 `:`
-<h1>7) Fluxo de Dados — Banco Tanque</h1>
+<h1>8) Fluxo de Dados — Banco Tanque</h1>
 <p>A integração entre o ERP (<b>${d.erp.nome||'ERP'}</b>) e o Guardian será realizada via <b>banco de dados intermediário (banco tanque)</b>.</p>
 ${d.erp.btSGBD?`<p><b>SGBD:</b> ${d.erp.btSGBD}</p>`:''}
 ${d.erp.btBanco?`<p><b>Banco intermediário:</b> ${d.erp.btBanco}</p>`:''}
@@ -1673,7 +1673,7 @@ ${d.erp.resp?`<h2>Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 `;
 
   // ── Operações condicionais por PC ──
-  let secNum=8;
+  let secNum=9;
   const pcOps=[];
 
   // Cadastramento
@@ -2326,13 +2326,6 @@ a{color:#1a3a6b}
 
 <div class="pbk"></div>
 
-<h1>1) Principais Documentos utilizados como referência</h1>
-<p>Este descritivo foi elaborado com base nas reuniões de levantamento de requisitos realizadas entre a Toledo do Brasil e ${d.clientName}, tendo como referência:</p>
-<ul>
-  <li>Ordem de Venda / Contrato de Hardware e Serviços: <b>${d.ctHardware||'a definir'}</b></li>
-  <li>Contrato Licenciamento Cloud Prix: <b>${d.ctCloud||'a definir'}</b></li>
-</ul>
-
 <h1>2) Responsáveis pelo Guardian no Cliente</h1>
 <p>Os responsáveis serão os únicos contatos no cliente, acompanharão os processos de validação da configuração e treinamento na Toledo (quando aplicável), supervisão de instalação, startup e treinamento dos operadores locais. Após a finalização da implantação, serão responsáveis pelos contatos com Toledo e pela orientação dos operadores da fábrica.</p>
 <p>Estas pessoas devem ter conhecimentos de Windows a nível técnico e vivência dos processos. O sucesso do sistema depende necessariamente do trabalho destas pessoas, cumprindo atividades de difusão e apoio técnico-operacional. Pessoas ligadas à informática e com conhecimento operacional dos processos são mais indicadas.</p>
@@ -2382,7 +2375,7 @@ ${hwTable}
 <img class="arq-img" src="${IMGS_B64.arq_solucao}" alt="Arquitetura da Solução Guardian PRO">
 <p>Cada ponto de controle é equipado com hardware específico para sua função — leitores de transponder RFID, cancelas automáticas, semáforos, displays, impressoras e câmeras — controlados pelo módulo MCA (Módulo de Controle de Automação) do Guardian, que gerencia os periféricos de forma automática conforme as regras do fluxo configurado.</p>
 
-<h1>8) Fluxos (Rotas)</h1>
+<h1>7) Fluxos (Rotas)</h1>
 <p>Os fluxos determinam os acessos permitidos pelo Guardian e o tipo das operações que serão realizadas para o veículo cadastrado. Esta informação é obrigatória no cadastro de cada veículo e o Ticket será encerrado automaticamente no último ponto do fluxo.</p>
 <p>O Guardian verificará, em cada ponto de controle, se o veículo tem permissão para acessar aquele ponto conforme seu fluxo. Caso o veículo tente acessar um ponto não previsto, o acesso será bloqueado.</p>
 ${flxTable}
