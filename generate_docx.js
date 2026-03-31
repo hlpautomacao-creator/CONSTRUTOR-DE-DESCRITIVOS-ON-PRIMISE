@@ -422,9 +422,11 @@ function parseHtmlTable(tableHtml) {
 }
 
 // ── HTML completo → array de elementos docx ───────────────────────────────
-function htmlToParas(html) {
+// opts.injectAfterFirstH1: base64 string da imagem a injetar após o primeiro H1
+function htmlToParas(html, opts = {}) {
   if (!html) return [];
   const paras = [];
+  let firstH1Done = false;
 
   // Remove script/style
   html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
@@ -479,6 +481,23 @@ function htmlToParas(html) {
     if (h1m) {
       const text = decodeHtml(h1m[1].replace(/<[^>]+>/g,''));
       if (text) result.push(h1(text));
+      // Injetar imagem do cliente após o primeiro H1 (seção "Sobre o Cliente")
+      if (!firstH1Done && opts.injectAfterFirstH1) {
+        firstH1Done = true;
+        try {
+          const b64img   = opts.injectAfterFirstH1;
+          const b64clean = b64img.includes('base64,') ? b64img.split('base64,')[1] : b64img;
+          const bufImg   = Buffer.from(b64clean, 'base64');
+          const extImg   = b64img.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+          const ratio    = getImageAspectRatio(bufImg, extImg);  // h/w
+          const wImg     = 14.0;
+          const hImg     = Math.min(wImg * ratio, 10.0);
+          const imgPars  = imgPara(b64img, wImg, '', { before: 80, after: 80, hCm: hImg });
+          if (imgPars) result.push(...imgPars);
+        } catch (e) {
+          process.stderr.write(`Imagem unidade cliente falhou: ${e.message}\n`);
+        }
+      }
       continue;
     }
     // H2
@@ -610,12 +629,6 @@ async function buildDoc(data) {
     }));
   }
 
-  // Foto do cliente
-  if (clientImgb64) {
-    const pars = imgPara(clientImgb64, 16, '', { before: 120, after: 120 });
-    if (pars) capaContent.push(...pars);
-  }
-
   // Tabela identificação: FAZENDA | CT/OV | CT CLOUD
   capaContent.push(emptyPara(60, 20));
   const idW = Math.floor(CW / 3);
@@ -718,7 +731,7 @@ async function buildDoc(data) {
   // ═══════════════════════════════════════════════════════
   // CONTEÚDO HTML
   // ═══════════════════════════════════════════════════════
-  const htmlParas = htmlToParas(data.htmlContent || '');
+  const htmlParas = htmlToParas(data.htmlContent || '', { injectAfterFirstH1: clientImgb64 });
   capaContent.push(...htmlParas);
 
   // ═══════════════════════════════════════════════════════

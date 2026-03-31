@@ -1,5 +1,26 @@
 [
   {
+    "versao": "v1.0.29",
+    "data": "2026-03-30",
+    "categoria": "Manutencao",
+    "descricao": "ajustes no docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.28",
+    "data": "2026-03-30",
+    "categoria": "Correcao de bug",
+    "descricao": "Removida seção duplicada de Balança/Pesagem no HTML gerado pelo buildDoc (duas seções idênticas eram inseridas no documento final)",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.27",
+    "data": "2026-03-30",
+    "categoria": "Melhoria",
+    "descricao": "Imagem da unidade do cliente movida da capa para a seção 'Sobre o Cliente' (após o primeiro H1 do campo htmlContent); blueprint de seções fixas e condicionais salvo em _blueprint_secoes.md",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.26",
     "data": "2026-03-30",
     "categoria": "Melhoria",

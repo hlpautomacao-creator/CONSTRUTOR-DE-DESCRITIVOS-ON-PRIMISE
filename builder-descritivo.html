@@ -1776,63 +1776,6 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
       pcOps.push(txt);
     }
   }
-  // Balança — com lógica de equipamentos
-  {
-    const pcBal=d.pcs.find(p=>p.tipo==='balanca');
-    if(pcBal){
-      const eq=pcBal.equip||{};
-      const temCancela=eq.cancela;
-      const temSemaforo=eq.semaforo;
-      const temDisplay=eq.display;
-      const temSensorT=eq.sensor_t;
-      const temSensorL=eq.sensor_l||eq.sensor_r;
-      const temCamera=eq.camera;
-      const temImpressor=eq.impressor;
-      const temIntercomunicador=eq.intercomunicador;
-      const temMCA=eq.mca;
-      pcOps.push(`
-<h1>${secNum++}) Descrição da Operação — ${pcBal.num} ${pcBal.name||'Pesagem'}</h1>
-<p>Tipo de pesagem configurado neste projeto: <b>${d.op.pesTipo||'Entrada + Saída (2 pesagens)'}</b>. ${temMCA?'A operação é <b>automática</b>, controlada pelo MCA.':'A operação exige presença do operador.'}</p>
-<h2>Pesagem Inicial</h2>
-<p>O motorista ao chegar na balança apresenta o transponder ao leitor${eq.leitor_uhf?' UHF':eq.leitor_qr?' de QR Code':''} instalado. O Guardian verifica as informações e, se o veículo estiver autorizado:</p>
-<ul>
-  ${temCancela?`<li>A <b>cancela de entrada</b> se abrirá, liberando o caminhão para subir na plataforma de pesagem;</li>`:''}
-  ${temSemaforo?`<li>O <b>semáforo de entrada</b> passará para a condição <b>verde (seta ▶)</b>, liberando para o caminhão subir na plataforma de pesagem;</li>`:''}
-  ${temDisplay?`<li>O <b>display</b> exibirá a mensagem <b>"SIGA"</b>;</li>`:''}
-</ul>
-${(temSemaforo||temDisplay)?`<p>Conforme o caminhão entra na balança (via verificação do peso pelo indicador):</p><ul>${temSemaforo?'<li>O <b>semáforo</b> passará para <b>vermelho</b>, indicando balança em uso para o próximo da fila;</li>':''}${temDisplay?'<li>O <b>display</b> exibirá a mensagem <b>"BALANÇA EM USO"</b>;</li>':''}</ul>`:''}
-<p>${temSensorT?'Com o caminhão corretamente posicionado na plataforma, situação detectada por meio dos <b>sensores de posicionamento transversais</b>':'Com o caminhão na plataforma'}, o Guardian realiza automaticamente a captura do peso${temSensorL?', auxiliado pelos <b>sensores longitudinais</b> para controle de entrada e saída da plataforma':''} e registra o peso inicial no ticket.</p>
-${temCamera?`<p>A <b>câmera</b> registrará automaticamente a imagem do posicionamento do veículo na plataforma (dianteira e traseira) para rastreabilidade.</p>`:''}
-<p>Após a pesagem, o Guardian libera a saída${temCancela?' — a cancela de saída se abrirá':''} e orienta o motorista a seguir para o próximo ponto do fluxo.</p>
-
-<h2>Pesagem Final</h2>
-<p>Após a carga ou descarga do produto, o caminhão retorna à balança para a pesagem final. O processo de identificação e automação é idêntico ao da pesagem inicial. Ao concluir, o Guardian calcula automaticamente o <b>Peso Líquido</b> (diferença entre Peso Bruto e Tara) e registra o encerramento da operação.</p>
-${temIntercomunicador?`<p>O ponto é equipado com <b>intercomunicador</b>, permitindo comunicação de voz entre o motorista (na cabine) e o operador da balança.</p>`:''}
-${temImpressor?`<p>O <b>impressor</b> está instalado neste ponto, podendo imprimir o tíquete de pesagem sem necessidade do motorista descer do caminhão.</p>`:''}
-
-${d.op.tolTipo!=='Não se aplica'?`
-<h2>Controle de Tolerância de Peso — <b>${d.op.tolTipo}</b>${d.op.tolVal?' — Valor: <b>'+d.op.tolVal+'</b>':''}</h2>
-<p>Após a pesagem final, o Guardian verifica se a diferença entre o Peso Origem (Peso Nota Fiscal informado pelo ERP) e o Peso Líquido apurado está dentro da tolerância configurada:</p>
-<ul>
-  <li><b>Dentro da tolerância:</b> o caminhão é liberado normalmente para o próximo ponto do fluxo;</li>
-  <li><b>Fora da tolerância:</b> o Guardian exibe alerta e aguarda intervenção de operador com permissão para liberar ou cancelar. A liberação pode ser feita via <b>${d.op.tolTipo}</b>, tanto no terminal fixo quanto via dispositivo móvel (Android) pelo Cloud Prix.</li>
-</ul>
-<h3>Subfluxo de Repesagem</h3>
-<p>Caso a operação seja liberada para repesagem (ajuste de carga), o veículo retorna para o ponto de carregamento/descarga e depois volta à balança para nova pesagem final com verificação de tolerância.</p>`:''}
-
-${d.op.bloqTipo?.includes('bloqueia')?`
-<h2>Bloqueio do Tíquete — Aguardando Nota Fiscal</h2>
-<p>Após o Guardian salvar os dados da pesagem, o tíquete será <b>bloqueado automaticamente</b> para a próxima operação. Isto se faz necessário para garantir a emissão e entrega da Nota Fiscal. O desbloqueio ocorrerá pelo ERP (${d.erp.tipo==='ws'?'via WebService — ManutencaoTicket':d.erp.tipo==='txt'?'via arquivo texto':'via banco tanque'}) ou via tela de manutenção do Guardian por operador autorizado.</p>`:''}
-
-<h2>Impressão do Tíquete de Pesagem</h2>
-<p>O tíquete de pesagem será impresso: <b>${d.op.tiqTipo||'Na saída (portaria)'}</b>.</p>
-${d.op.tiqCampos?`<p>Campos adicionais configurados no tíquete: <b>${d.op.tiqCampos}</b>.</p>`:''}
-<h2>Exportação de dados do Tíquete</h2>
-<p>Após conclusão da pesagem, os dados (peso líquido, peso bruto, tara, data/hora e demais informações) serão exportados para o ERP ${d.erp.nome||''} via ${d.erp.tipo==='ws'?'WebService':d.erp.tipo==='txt'?'arquivo texto em pasta de rede':'banco tanque'}.</p>
-`);
-    }
-  }
-
   // Balança — sequência completa por equipamento (entrada + saída)
   {
     const pcBal = d.pcs.find(p => p.tipo==='balanca');
