@@ -1,9 +1,261 @@
 [
   {
-    "versao": "1.0.29",
+    "versao": "v1.0.31",
+    "data": "2026-03-31",
+    "categoria": "Correcao de bug",
+    "descricao": "correção do changelog",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.30",
+    "data": "2026-03-31",
+    "categoria": "Melhoria",
+    "descricao": "Seção fixa '1) Perfil do Cliente' em página dedicada após o Índice: imagem da unidade (clientImgB64) + texto descritivo (clientDesc). Corrigido rendering de cabeçalhos MIME/MHT no htmlContent. Removida lógica injectAfterFirstH1.",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.29",
     "data": "2026-03-30",
     "categoria": "Manutencao",
     "descricao": "correções docx",
     "responsavel": "patrik"
+  },
+  {
+    "versao": "v1.0.28",
+    "data": "2026-03-30",
+    "categoria": "Correcao de bug",
+    "descricao": "Removida seção duplicada de Balança/Pesagem no HTML gerado pelo buildDoc (duas seções idênticas eram inseridas no documento final)",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.27",
+    "data": "2026-03-30",
+    "categoria": "Melhoria",
+    "descricao": "Imagem da unidade do cliente movida da capa para a seção 'Sobre o Cliente' (após o primeiro H1 do campo htmlContent); blueprint de seções fixas e condicionais salvo em _blueprint_secoes.md",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.26",
+    "data": "2026-03-30",
+    "categoria": "Melhoria",
+    "descricao": "Ajustes no .docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.25",
+    "data": "2026-03-30",
+    "categoria": "Melhoria",
+    "descricao": "Capa: ratio Guardian corrigido (0.418), logo cliente inserido após tabela CT/OV (~5cm), espaçamentos aumentados (40→120, 80→160), data convertida automaticamente para dd/mm/yyyy",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.24",
+    "data": "2026-03-22",
+    "categoria": "Manutencao",
+    "descricao": "Ajustes no documento docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.23",
+    "data": "2026-03-22",
+    "categoria": "Correcao de bug",
+    "descricao": "Correção das imagens na capa",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.22",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "Ajuste no docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.21",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "correção de erro na geração do docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.20",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "ajustes no docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.19",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "ajuste no docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.18",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "Ajustes no docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.17",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "ajustes no docx",
+    "responsavel": "patrik"
+  },
+  {
+    "versao": "v1.0.16",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "Correção no changelog e melhoria no docx",
+    "responsavel": ""
+  },
+  {
+    "versao": "v1.0.15",
+    "data": "2026-03-20",
+    "categoria": "Manutencao",
+    "descricao": "Ajuste no documento .docx gerado ao final do preenchimento do projeto",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.14",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Incluido campo de segmento do cliente para filtros futuros",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.13",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "correção de duplicidade de informações",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.12",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Bug no preenchimento dos pc no campo hardware, correção na sessão 4 fluxos quando usando o recurso de clonagem",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.11",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "correcao da exibicao de data/hora",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.10",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "correção da data de criação do historico de descritivo",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.9",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "corrigido digitação da descrição do PC, corrigido revisão na sessao 8",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.8",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Correção na navegação lateral, correção na clonagem dos fluxos, correcao de PCs duplicados na sessao 6",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.7",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "corrigindo funcao do changelog",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.6",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Correção de bugs para recurso de auditoria das revisões",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.5",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "teste",
+    "responsavel": "patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Historico passa a restaurar projeto completo ao clonar (PCs, fluxos, modulos, filas, patios, ERP e operacoes)",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Corrige duplicacao de PCs na secao de Operacoes ao clonar projeto do historico",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Novo recurso",
+    "descricao": "Botao Limpar Secao: limpa apenas a secao atual sem apagar o restante do projeto",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.4",
+    "data": "2026-03-20",
+    "categoria": "Novo recurso",
+    "descricao": "Botao Novo Projeto: reseta todo o preenchimento para iniciar um projeto do zero",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.3",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Dropdown de filas e patios agora exibe apenas as operacoes marcadas para cada PC, nao mais todas as opcoes do tipo",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.3",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Dropdowns de filas e patios atualizam automaticamente ao marcar ou desmarcar operacoes nos PCs",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.2",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Corrige botao Gerar Descritivo que estava gerando arquivo .mht em vez de .docx",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.2",
+    "data": "2026-03-20",
+    "categoria": "Correcao de bug",
+    "descricao": "Corrige conexao SSL com PostgreSQL local (sslmode disable para instancia local)",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.1",
+    "data": "2026-03-20",
+    "categoria": "Melhoria",
+    "descricao": "Renomeia aplicacao de Guardian PRO Builder para Construtor de Descritivo Funcional",
+    "responsavel": "Patrik"
+  },
+  {
+    "versao": "v1.0.0",
+    "data": "2026-03-20",
+    "categoria": "Novo recurso",
+    "descricao": "Primeiro deploy local com Docker — servidor Python + PostgreSQL em containers",
+    "responsavel": "Patrik"
   }
 ]
