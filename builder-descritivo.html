@@ -1682,6 +1682,7 @@ ${d.erp.resp?`<h2>Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 <p>Este ponto tem como objetivo a realização do cadastramento de todos os veículos, associação do TAG e a escolha do fluxo de movimentação dentro da unidade. O procedimento de análise é de responsabilidade do cliente.</p>
 <h2>Modelo do TAG</h2>
 <p>Tipo de TAG utilizado neste projeto: <b>${d.op.tagTipo||'Cartão PVC com QR Code e código de barras padrão Code 128'}</b>. O transponder é encapsulado com proteção em PVC, impresso com QR Code em um lado e código de barras Code 128 do outro, contendo o número interno do TAG.</p>
+<img data-gimg="tag_cartao">
 <h2>Cadastramento pelo sistema ERP — <b>${d.op.cadTipo||'Via ERP (padrão)'}</b></h2>
 <p>A pré-marcação (cadastramento de entrada) será feita no sistema ERP <b>${d.erp.nome||'do cliente'}</b>. O motorista ao chegar na portaria efetua o cadastramento para ser autorizado a seguir para carregamento ou descarregamento.</p>
 <p>Por meio de um leitor de cadastramento, o software ERP lê o número do transponder e associa-o à placa da Carreta e demais dados: placa do cavalo, código do FLUXO, TAG, item, fornecedor/emissor, transportadora, motorista e documentos (quando aplicável).</p>
@@ -1693,6 +1694,7 @@ ${d.op.cadTipo?.includes('ERP')||d.op.cadTipo?.includes('Ambos')?`
 <p>Para cancelar o tíquete antes do veículo acessar a unidade, o ERP envia manutenção ao Guardian via ${d.erp.tipo==='ws'?'<i>ManutencaoTicket</i>':d.erp.tipo==='txt'?'arquivo texto de cancelamento':'banco tanque'}, alterando o estado do ticket. A alteração é aplicada apenas em tickets abertos (diferentes de Cancelados e Encerrados).</p>`:''}
 <h2>Cadastro Direto no Guardian (Contingência)</h2>
 <p>O cadastro direto no Guardian será utilizado em <b>modo contingência</b> — quando o ERP estiver "fora do ar" ou houver problema que impeça o cadastro via sistema corporativo. O Guardian estará configurado para permitir o cadastro completo diretamente no software nestes casos.</p>
+<img data-gimg="tela_cadastro">
 ${d.op.cadObs?`<div class="obs"><b>Observações específicas:</b> ${d.op.cadObs}</div>`:''}
 ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cadastrados do veículo, o mesmo creditará o caminhão na fila de veículos pré-cadastrados${d.filaNomes?'. Filas configuradas: <b>'+d.filaNomes+'</b>':''}. O controle de fila garantirá a sequência de chamada dos veículos para a operação.</p>`:''}
 `);
@@ -1712,6 +1714,7 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
   <li>Mesmo com resposta NÃO no meio do questionário, a inspeção prossegue até o final para que o operador visualize todas as respostas restritivas antes de decidir;</li>
   <li>Uma pergunta respondida não pode mais ser alterada.</li>
 </ul>
+<img data-gimg="tela_inspecao">
 <div class="obs"><b>Obs.:</b> O fornecimento da estrutura de Wi-Fi para comunicação com o banco de dados do Guardian é de responsabilidade do cliente.</div>
 `);
 
@@ -1738,6 +1741,7 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
       txt += '<p>Este ponto tem como objetivo controlar o acesso de entrada dos veículos à unidade, verificando se o caminhão está autorizado conforme o fluxo pré-definido no cadastro. ';
       txt += mca ? 'A operação é <b>automática (sem intervenção humana)</b>, controlada pelo módulo MCA.' : 'A operação exige <b>intervenção do operador</b> no ponto de controle.';
       txt += '</p>';
+      txt += '<img data-gimg="tela_operacao">';
 
       txt += '<h2>Acesso de Entrada</h2>';
       txt += '<p>O motorista ao chegar no ponto de acesso de entrada ';
@@ -1800,6 +1804,7 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
       txt += '<p>Tipo de pesagem configurado: <b>'+(d.op.pesTipo||'Entrada + Saída (2 pesagens)')+'</b>. ';
       txt += mca ? 'A operação é <b>automática</b>, controlada pelo módulo MCA.' : 'A operação exige presença do operador.';
       txt += '</p>';
+      txt += '<img data-gimg="tela_pesagem">';
 
       // ── PESAGEM INICIAL ──────────────────────────────────────────
       txt += '<h2>Pesagem Inicial</h2>';
@@ -1938,6 +1943,7 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
       txt += '<p>Este ponto tem como objetivo controlar a saída dos veículos da unidade, garantindo que todas as etapas do fluxo foram concluídas antes da liberação. ';
       txt += mca ? 'A operação é <b>automática</b>, controlada pelo módulo MCA.' : '';
       txt += '</p>';
+      txt += '<img data-gimg="tela_operacao">';
 
       // ── CAIXA COLETORA ───────────────────────────────────────────
       if(coletora){
@@ -2022,8 +2028,10 @@ ${d.filaNomes?`<p>Filas configuradas neste projeto: <b>${d.filaNomes}</b>.</p>`:
 <p>Para caminhões que não passam pelo controle de fila (ex: veículos de frota interna), o Guardian poderá ser configurado para não verificar fila, liberando o acesso diretamente na balança, portaria de entrada e/ou saída.</p>
 <h2>Exibição em TV</h2>
 <p>A grade de visualização da fila no painel de TV tem design e colunas configuráveis. Permite ajustar tamanho de fonte, tempo de exibição de cada página e quantidade de linhas conforme o tipo de monitor e distância de leitura. A configuração é feita de forma independente para cada painel.</p>
+<img data-gimg="tela_filas_tv">
 <h2>Informações da tela de gerenciamento de fila</h2>
 <p>A tela de gerenciamento de filas exibe em tempo real: placa do veículo, posição na fila, transportadora, produto, tempo de espera e status. O operador pode realizar crédito/débito manual, alterar prioridade e visualizar histórico de movimentações.</p>
+<img data-gimg="tela_fila_mgmt">
 `);
 
   if(d.mods.yms) modSections.push(`
@@ -2035,6 +2043,7 @@ ${d.ymsPatios?`<h2>Pátios configurados neste projeto</h2><p>${d.ymsPatios}</p>`
   <li><b>Tela de ocupação de pátios:</b> exibe percentual de vagas ocupadas em relação ao número de vagas configurado, com gráfico circular representando a ocupação;</li>
   <li><b>Tela de acompanhamento do processo:</b> exibe o fluxo que cada veículo está seguindo com indicação visual por cores (Azul = concluído, Verde = em operação, Amarelo = próximo ao limite, Vermelho = tempo excedido).</li>
 </ul>
+<img data-gimg="tela_patio_yms">
 `);
 
   if(d.mods.agend) modSections.push(`
@@ -2152,6 +2161,7 @@ ${d.mods.gw?`<tr><td><b>Guardian WCF</b></td><td>Middleware do Gestor Web.</td><
 <tr><td><b>Web Service</b></td><td>Serviço de interface do Guardian para integração com sistemas externos.</td></tr>
 </tbody></table>
 <p style="font-size:10pt;color:#666;margin-top:8pt">Localização no menu iniciar: Menu Iniciar ▶ Todos os Programas ▶ Toledo do Brasil ▶ Guardian</p>
+<img data-gimg="tela_login">
 
 <h1>${secNum++}) Conceitos do Guardian</h1>
 <h2>Operação</h2>
@@ -2372,13 +2382,14 @@ ${hwTable}
 
 <h1>6) Arquitetura Ilustrativa da Solução</h1>
 <p>A solução Guardian PRO é composta por módulos integrados que permitem o controle total do processo de pesagem e acesso de veículos. O software é executado em estações de trabalho (PCs) distribuídas nos pontos de controle e se comunica em tempo real com o servidor central Guardian e com a plataforma Cloud Prix.</p>
-<img class="arq-img" src="${IMGS_B64.arq_solucao}" alt="Arquitetura da Solução Guardian PRO">
+<img data-gimg="arq_solucao">
 <p>Cada ponto de controle é equipado com hardware específico para sua função — leitores de transponder RFID, cancelas automáticas, semáforos, displays, impressoras e câmeras — controlados pelo módulo MCA (Módulo de Controle de Automação) do Guardian, que gerencia os periféricos de forma automática conforme as regras do fluxo configurado.</p>
 
 <h1>7) Fluxos (Rotas)</h1>
 <p>Os fluxos determinam os acessos permitidos pelo Guardian e o tipo das operações que serão realizadas para o veículo cadastrado. Esta informação é obrigatória no cadastro de cada veículo e o Ticket será encerrado automaticamente no último ponto do fluxo.</p>
 <p>O Guardian verificará, em cada ponto de controle, se o veículo tem permissão para acessar aquele ponto conforme seu fluxo. Caso o veículo tente acessar um ponto não previsto, o acesso será bloqueado.</p>
 ${flxTable}
+<img data-gimg="fluxo_seq">
 ${d.flxObs?`<div class="obs"><b>Observações:</b> ${d.flxObs}</div>`:''}
 <div class="note"><b>Nota:</b> Alterações de fluxos serão realizadas na tela de "Manutenção de Pesagem" por um operador com as devidas permissões. Demais fluxos deverão ser definidos e especificados pelo cliente antes ou durante a etapa de aprovação deste descritivo.</div>
 

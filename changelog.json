@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.34",
+    "data": "2026-03-31",
+    "categoria": "Melhoria",
+    "descricao": "imagens inline por seção — htmlToParas recebe imgs e resolve data-gimg; removido bloco addImg() do final; marcadores inseridos em 11 pontos do documento",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.33",
     "data": "2026-03-31",
     "categoria": "Correcao de bug",

@@ -422,8 +422,10 @@ function parseHtmlTable(tableHtml) {
 }
 
 // ── HTML completo → array de elementos docx ───────────────────────────────
-function htmlToParas(html) {
+// imgs: objeto data.guardianImgs — usado para resolver <img data-gimg="chave">
+function htmlToParas(html, imgs) {
   if (!html) return [];
+  imgs = imgs || {};
   const paras = [];
 
   // ── Strip cabeçalhos MIME/MHT (quando htmlContent vem do builder .mht) ──
@@ -475,9 +477,21 @@ function htmlToParas(html) {
     tIdx++;
   }
 
-  // Agora processar o HTML sem tabelas
+  // Extrair <img data-gimg="chave"> — imagens Guardian inline por seção
+  const dgimgRe = /<img[^>]+data-gimg="([^"]+)"[^>]*\/?>/gi;
+  const dgimgs = [];
+  let dgMatch;
+  const htmlForGimg = htmlWithPlaceholders;
+  while ((dgMatch = dgimgRe.exec(htmlForGimg)) !== null) {
+    const key = dgMatch[1];
+    const placeholder = `__GIMG_${dgimgs.length}__`;
+    dgimgs.push({ placeholder, key });
+    htmlWithPlaceholders = htmlWithPlaceholders.replace(dgMatch[0], placeholder);
+  }
+
+  // Agora processar o HTML sem tabelas nem imagens guardian
   // Dividir em segmentos por tags de bloco
-  const segments = htmlWithPlaceholders.split(/(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>|<p[^>]*>[\s\S]*?<\/p>|<ul[^>]*>[\s\S]*?<\/ul>|<ol[^>]*>[\s\S]*?<\/ol>|__TABLE_\d+__)/gi).filter(s => s.trim());
+  const segments = htmlWithPlaceholders.split(/(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>|<p[^>]*>[\s\S]*?<\/p>|<ul[^>]*>[\s\S]*?<\/ul>|<ol[^>]*>[\s\S]*?<\/ol>|__TABLE_\d+__|__GIMG_\d+__)/gi).filter(s => s.trim());
 
   for (const seg of segments) {
     const s = seg.trim();
@@ -488,6 +502,27 @@ function htmlToParas(html) {
     if (tph) {
       const tbl = parseHtmlTable(tables[parseInt(tph[1])].html);
       if (tbl) { result.push(emptyPara(20,10)); result.push(tbl); result.push(emptyPara(20,20)); }
+      continue;
+    }
+
+    // Imagem Guardian inline — <img data-gimg="chave">
+    const gph = s.match(/^__GIMG_(\d+)__$/);
+    if (gph) {
+      const { key } = dgimgs[parseInt(gph[1])];
+      if (imgs[key]) {
+        try {
+          const b64 = imgs[key];
+          const ext = b64.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+          const buf = Buffer.from(b64.includes('base64,') ? b64.split('base64,')[1] : b64, 'base64');
+          const ratio = getImageAspectRatio(buf, ext);
+          const wCm = 15.0;
+          const hCm = Math.min(wCm * ratio, 12.0);
+          const pars = imgPara(b64, wCm, '', { before: 20, after: 30, hCm });
+          if (pars) result.push(...pars);
+        } catch(e) {
+          process.stderr.write(`data-gimg "${key}" falhou: ${e.message}\n`);
+        }
+      }
       continue;
     }
 
@@ -791,41 +826,9 @@ async function buildDoc(data) {
   // ═══════════════════════════════════════════════════════
   // CONTEÚDO HTML (seções técnicas geradas pelo builder)
   // ═══════════════════════════════════════════════════════
-  const htmlParas = htmlToParas(data.htmlContent || '');
+  // imgs passado para htmlToParas resolver <img data-gimg="chave"> inline
+  const htmlParas = htmlToParas(data.htmlContent || '', imgs);
   capaContent.push(...htmlParas);
-
-  // ═══════════════════════════════════════════════════════
-  // IMAGENS PADRÃO GUARDIAN
-  // ═══════════════════════════════════════════════════════
-  const addImg = (title, key, caption, wCm, condition = true) => {
-    if (!condition || !imgs[key]) return;
-    capaContent.push(emptyPara(40, 20));
-    capaContent.push(h2(title));
-    const pars = imgPara(imgs[key], wCm, caption, { before: 20, after: 20 });
-    if (pars) capaContent.push(...pars);
-  };
-
-  capaContent.push(pageBreak());
-  addImg('Arquitetura Ilustrativa da Solução', 'arq_solucao',
-    'Figura: Arquitetura ilustrativa da solução Guardian PRO', 17.0);
-  addImg('Acesso ao Sistema — Tela de Login', 'tela_login',
-    'Figura: Tela de autenticação do Guardian PRO', 14.0);
-  addImg('Tela Principal — Operação', 'tela_operacao',
-    'Figura: Tela principal de operação do Guardian PRO', 16.0);
-  addImg('Tela de Pré-Cadastro', 'tela_precadastro',
-    'Figura: Tela de pré-cadastro de veículo no Guardian PRO', 16.0);
-  addImg('Tela de Cadastramento', 'tela_cadastro',
-    'Figura: Tela de cadastramento de veículo e motorista no Guardian PRO', 16.0);
-  addImg('Modelo do TAG de Identificação', 'tag_cartao',
-    'Figura: Modelo padrão do TAG de identificação veicular — frente e verso', 14.0);
-  addImg('Tela de Pesagem', 'tela_pesagem',
-    'Figura: Tela de operação de pesagem no Guardian PRO', 16.0);
-  addImg('Gerenciamento de Filas — Exibição em TV', 'tela_filas_tv',
-    'Figura: Tela de gerenciamento de filas exibida em painel de TV', 16.0, mods.fila);
-  addImg('Tela de Inspeção Veicular', 'tela_inspecao',
-    'Figura: Tela de inspeção veicular via dispositivo móvel', 14.0, mods.inspecao);
-  addImg('Gestão de Pátios (YMS)', 'tela_patio_yms',
-    'Figura: Tela de monitoramento de pátios via Cloud Prix (YMS)', 16.0, mods.yms);
 
   // ── Montar documento ────────────────────────────────────────────────
   const header = buildHeader(clientLogob64, prixb64);
