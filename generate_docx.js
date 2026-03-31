@@ -422,11 +422,22 @@ function parseHtmlTable(tableHtml) {
 }
 
 // ── HTML completo → array de elementos docx ───────────────────────────────
-// opts.injectAfterFirstH1: base64 string da imagem a injetar após o primeiro H1
-function htmlToParas(html, opts = {}) {
+function htmlToParas(html) {
   if (!html) return [];
   const paras = [];
-  let firstH1Done = false;
+
+  // ── Strip cabeçalhos MIME/MHT (quando htmlContent vem do builder .mht) ──
+  // Extrai apenas o conteúdo entre <body> e </body>, ou tudo após os headers
+  if (html.includes('MIME-Version:') || html.includes('Content-Type: multipart')) {
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    if (bodyMatch) {
+      html = bodyMatch[1];
+    } else {
+      // Fallback: pular até a primeira tag HTML
+      const htmlTagIdx = html.search(/<html[\s >]/i);
+      if (htmlTagIdx >= 0) html = html.slice(htmlTagIdx);
+    }
+  }
 
   // Remove script/style
   html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
@@ -481,23 +492,6 @@ function htmlToParas(html, opts = {}) {
     if (h1m) {
       const text = decodeHtml(h1m[1].replace(/<[^>]+>/g,''));
       if (text) result.push(h1(text));
-      // Injetar imagem do cliente após o primeiro H1 (seção "Sobre o Cliente")
-      if (!firstH1Done && opts.injectAfterFirstH1) {
-        firstH1Done = true;
-        try {
-          const b64img   = opts.injectAfterFirstH1;
-          const b64clean = b64img.includes('base64,') ? b64img.split('base64,')[1] : b64img;
-          const bufImg   = Buffer.from(b64clean, 'base64');
-          const extImg   = b64img.startsWith('data:image/jpeg') ? 'jpg' : 'png';
-          const ratio    = getImageAspectRatio(bufImg, extImg);  // h/w
-          const wImg     = 14.0;
-          const hImg     = Math.min(wImg * ratio, 10.0);
-          const imgPars  = imgPara(b64img, wImg, '', { before: 80, after: 80, hCm: hImg });
-          if (imgPars) result.push(...imgPars);
-        } catch (e) {
-          process.stderr.write(`Imagem unidade cliente falhou: ${e.message}\n`);
-        }
-      }
       continue;
     }
     // H2
@@ -581,6 +575,7 @@ async function buildDoc(data) {
   const clientLogob64 = data.clientLogoB64 || '';
   const prixb64 = data.prixLogoB64 || '';
   const clientImgb64 = data.clientImgB64 || '';
+  const clientDesc = data.clientDesc || '';
 
   const docFilename = `Descritivo Funcional_GuardianPRO_${data.clientName || 'Cliente'}_${rev}`;
 
@@ -729,9 +724,46 @@ async function buildDoc(data) {
   capaContent.push(pageBreak());
 
   // ═══════════════════════════════════════════════════════
-  // CONTEÚDO HTML
+  // SEÇÃO FIXA: PERFIL DO CLIENTE (página dedicada, logo após o Índice)
   // ═══════════════════════════════════════════════════════
-  const htmlParas = htmlToParas(data.htmlContent || '', { injectAfterFirstH1: clientImgb64 });
+  capaContent.push(sectionTitle('1) Perfil do Cliente'));
+  capaContent.push(emptyPara(20, 20));
+
+  // Imagem da unidade/planta do cliente (centralizada, largura máx 14cm)
+  if (clientImgb64) {
+    try {
+      const b64clean = clientImgb64.includes('base64,') ? clientImgb64.split('base64,')[1] : clientImgb64;
+      const bufImg   = Buffer.from(b64clean, 'base64');
+      const extImg   = clientImgb64.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+      const ratio    = getImageAspectRatio(bufImg, extImg);  // h/w
+      const wImg     = 14.0;
+      const hImg     = Math.min(wImg * ratio, 10.0);
+      const imgPars  = imgPara(clientImgb64, wImg, '', { before: 40, after: 60, hCm: hImg });
+      if (imgPars) capaContent.push(...imgPars);
+    } catch (e) {
+      process.stderr.write(`Imagem perfil cliente falhou: ${e.message}\n`);
+    }
+  }
+
+  // Texto descritivo do cliente
+  if (clientDesc) {
+    // Quebra por parágrafos (o campo pode conter \n ou \n\n)
+    const descParas = clientDesc.split(/\n+/).map(t => t.trim()).filter(t => t.length > 0);
+    for (const txt of descParas) {
+      capaContent.push(new Paragraph({
+        alignment: AlignmentType.JUSTIFY,
+        spacing: spacingPara(40, 40),
+        children: [new TextRun({ text: txt, font: 'Arial', size: 22 })]
+      }));
+    }
+  }
+
+  capaContent.push(pageBreak());
+
+  // ═══════════════════════════════════════════════════════
+  // CONTEÚDO HTML (seções técnicas geradas pelo builder)
+  // ═══════════════════════════════════════════════════════
+  const htmlParas = htmlToParas(data.htmlContent || '');
   capaContent.push(...htmlParas);
 
   // ═══════════════════════════════════════════════════════
