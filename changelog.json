@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.38",
+    "data": "2026-04-02",
+    "categoria": "Melhoria",
+    "descricao": "Espacamento de paragrafos ampliado nas secoes geradas pelo htmlToParas: <p> de 40/40 para 60/160 twips, <li> de 20/20 para 20/80 — texto nao fica mais colado",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.37",
     "data": "2026-04-02",
     "categoria": "Manutencao",

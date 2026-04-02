@@ -571,7 +571,7 @@ function htmlToParas(html, imgs) {
       for (const li of lis) {
         const runs = parseInlineRuns(li[1]);
         if (runs.length) result.push(new Paragraph({
-          spacing: spacingPara(20, 20),
+          spacing: spacingPara(20, 80),
           numbering: { reference: 'bullets', level: 0 },
           children: runs
         }));
@@ -587,7 +587,7 @@ function htmlToParas(html, imgs) {
       const runs = parseInlineRuns(inner);
       if (runs.length) result.push(new Paragraph({
         alignment: AlignmentType.JUSTIFY,
-        spacing: spacingPara(40, 40),
+        spacing: spacingPara(60, 160),
         children: runs
       }));
       continue;
@@ -597,7 +597,7 @@ function htmlToParas(html, imgs) {
     const text = decodeHtml(s.replace(/<[^>]+>/g,'').trim());
     if (text && text.length > 1) result.push(new Paragraph({
       alignment: AlignmentType.JUSTIFY,
-      spacing: spacingPara(40, 40),
+      spacing: spacingPara(60, 160),
       children: [new TextRun({ text, font: 'Arial', size: 22 })]
     }));
   }
