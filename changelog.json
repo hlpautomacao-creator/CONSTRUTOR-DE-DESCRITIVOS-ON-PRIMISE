@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.36",
+    "data": "2026-04-02",
+    "categoria": "Melhoria",
+    "descricao": "Secoes 2-6: notas importantes apos tabela de responsaveis; secao 3 com subgrupos Cadastramento/Gestao e paragrafo Guardian PRO; secao 4 com nome do cliente; secao 6 com aviso ARQUITETURA ILUSTRATIVA; bullets de objetivo separados em arrays explicitos (objBulletsCad / objBulletsGestao)",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.35",
     "data": "2026-04-02",
     "categoria": "Manutencao",

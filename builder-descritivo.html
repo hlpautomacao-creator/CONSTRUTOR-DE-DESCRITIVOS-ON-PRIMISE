@@ -1608,18 +1608,27 @@ function buildDoc(d){
   const today=d.docDate?new Date(d.docDate+'T12:00:00').toLocaleDateString('pt-BR'):new Date().toLocaleDateString('pt-BR');
 
   // ── Objetivo da Solução bullets (condicionais por módulo/operação) ──
-  const objBullets=[];
-  if(d.pcs.length>0) objBullets.push(`<li><b>Cadastramento (${d.pcs[0]?.num||'PC'}):</b> Controlar a entrada de veículos, realizando a associação do transponder (TAG) ao ticket e definindo o fluxo de movimentação dentro da unidade.</li>`);
-  if(d.pcs.some(p=>p.name?.toLowerCase().includes('balan')||p.name?.toLowerCase().includes('pesag'))) objBullets.push(`<li><b>Pesagem:</b> Capturar o peso bruto (tara) e peso final (cheio ou vazio), calcular o peso líquido e registrar os dados da operação${d.op.tolTipo!=='Não se aplica'?' com controle de tolerância de peso':''}.</li>`);
-  if(d.pcs.some(p=>p.name?.toLowerCase().includes('entra')||p.name?.toLowerCase().includes('portaria'))) objBullets.push(`<li><b>Acesso Portaria Entrada:</b> Controlar o acesso de entrada dos veículos à unidade, verificando a autorização conforme fluxo pré-definido e acionando cancela e semáforo automaticamente.</li>`);
-  if(d.pcs.some(p=>p.name?.toLowerCase().includes('saída')||p.name?.toLowerCase().includes('saida'))) objBullets.push(`<li><b>Acesso Portaria Saída:</b> Controlar a saída dos veículos, garantir a devolução do TAG e imprimir o tíquete de pesagem sem necessidade do motorista descer do caminhão.</li>`);
-  if(d.mods.inspecao) objBullets.push(`<li><b>Inspeção Veicular / Checklist:</b> Verificar as condições mínimas do veículo para carregamento/descarregamento via dispositivo móvel, com perguntas configuráveis e aprovação/reprovação registrada no sistema.</li>`);
-  if(d.mods.tulha) objBullets.push(`<li><b>Acesso Tulha / Carregamento:</b> Bloquear a entrada de caminhões não autorizados, garantir controle de vaga (um por vez) e consistir a passagem antes da liberação.</li>`);
-  if(d.mods.moega) objBullets.push(`<li><b>Checkpoint Moega:</b> Consistir a passagem obrigatória pelo ponto de moega via dispositivo móvel, impedindo que o veículo avance para a próxima etapa sem esta validação.</li>`);
-  if(d.mods.fila) objBullets.push(`<li><b>Controle de Fila:</b> Garantir a sequência de chamada dos veículos para operação, autorizando ou não o acesso conforme posição na fila${d.filaNomes?'. Filas: '+d.filaNomes:''}.</li>`);
-  if(d.mods.yms) objBullets.push(`<li><b>Gestão de Pátios (YMS):</b> Monitorar em tempo real a movimentação de veículos entre pátios, controlando vagas remanescentes e tempo de permanência${d.ymsPatios?'. Pátios: '+d.ymsPatios:''}.</li>`);
-  if(d.mods.agend) objBullets.push(`<li><b>Módulo Agendamento:</b> Permitir que motoristas agendem horário de chegada pelo aplicativo Guardian Fácil, garantindo controle de janelas de atendimento e redução de filas na portaria.</li>`);
-  objBullets.push(`<li><b>Integração ERP (${d.erp.tipo==='ws'?'Webservice':d.erp.tipo==='txt'?'Arquivo Texto':'Banco Tanque'}):</b> ${d.erp.tipo==='ws'?'Receber pré-cadastros e exportar dados de pesagem para o '+( d.erp.nome||'ERP')+' via WebService, eliminando digitação manual e garantindo rastreabilidade.':d.erp.tipo==='txt'?'Importar pré-cadastros e exportar dados de pesagem para o '+(d.erp.nome||'ERP')+' via arquivo texto (SIG) em pasta de rede compartilhada.':'Integrar com o '+(d.erp.nome||'ERP')+' via banco de dados intermediário (banco tanque) para troca de informações de cadastro e pesagem.'}</li>`);
+  // Grupo Cadastramento: operações de acesso/cadastro
+  const objBulletsCad=[];
+  if(d.pcs.length>0) objBulletsCad.push(`<li><b>Cadastramento (${d.pcs[0]?.num||'PC'}):</b> Controlar a entrada de veículos, realizando a associação do transponder (TAG) ao ticket e definindo o fluxo de movimentação dentro da unidade.</li>`);
+  if(d.pcs.some(p=>p.name?.toLowerCase().includes('entra')||p.name?.toLowerCase().includes('portaria'))) objBulletsCad.push(`<li><b>Acesso Portaria Entrada:</b> Controlar o acesso de entrada dos veículos à unidade, verificando a autorização conforme fluxo pré-definido e acionando cancela e semáforo automaticamente.</li>`);
+  if(d.mods.agend) objBulletsCad.push(`<li><b>Módulo Agendamento:</b> Permitir que motoristas agendem horário de chegada pelo aplicativo Guardian Fácil, garantindo controle de janelas de atendimento e redução de filas na portaria.</li>`);
+  // Grupo Gestão: pesagem, controle, módulos e integração
+  const objBulletsGestao=[];
+  if(d.pcs.some(p=>p.name?.toLowerCase().includes('balan')||p.name?.toLowerCase().includes('pesag'))) objBulletsGestao.push(`<li><b>Pesagem:</b> Capturar o peso bruto (tara) e peso final (cheio ou vazio), calcular o peso líquido e registrar os dados da operação${d.op.tolTipo!=='Não se aplica'?' com controle de tolerância de peso':''}.</li>`);
+  if(d.pcs.some(p=>p.name?.toLowerCase().includes('saída')||p.name?.toLowerCase().includes('saida'))) objBulletsGestao.push(`<li><b>Acesso Portaria Saída:</b> Controlar a saída dos veículos, garantir a devolução do TAG e imprimir o tíquete de pesagem sem necessidade do motorista descer do caminhão.</li>`);
+  objBulletsGestao.push(`<li>Documentar e registrar de forma segura os processos (passíveis de inspeção e auditoria).</li>`);
+  objBulletsGestao.push(`<li>Controlar o tempo de permanência dos veículos na unidade.</li>`);
+  objBulletsGestao.push(`<li>Reduzir tempo nos processos de acesso e pesagem.</li>`);
+  objBulletsGestao.push(`<li>Por meio de dashboards, permitir a visualização completa e em tempo real dos veículos durante as etapas do processo logístico, desde a chegada na portaria até a saída da unidade.</li>`);
+  if(d.mods.inspecao) objBulletsGestao.push(`<li><b>Inspeção Veicular / Checklist:</b> Verificar as condições mínimas do veículo para carregamento/descarregamento via dispositivo móvel, com perguntas configuráveis e aprovação/reprovação registrada no sistema.</li>`);
+  if(d.mods.tulha) objBulletsGestao.push(`<li><b>Acesso Tulha / Carregamento:</b> Bloquear a entrada de caminhões não autorizados, garantir controle de vaga (um por vez) e consistir a passagem antes da liberação.</li>`);
+  if(d.mods.moega) objBulletsGestao.push(`<li><b>Checkpoint Moega:</b> Consistir a passagem obrigatória pelo ponto de moega via dispositivo móvel, impedindo que o veículo avance para a próxima etapa sem esta validação.</li>`);
+  if(d.mods.fila) objBulletsGestao.push(`<li><b>Controle de Fila:</b> Garantir a sequência de chamada dos veículos para operação, autorizando ou não o acesso conforme posição na fila${d.filaNomes?'. Filas: '+d.filaNomes:''}.</li>`);
+  if(d.mods.yms) objBulletsGestao.push(`<li><b>Gestão de Pátios (YMS):</b> Monitorar em tempo real a movimentação de veículos entre pátios, controlando vagas remanescentes e tempo de permanência${d.ymsPatios?'. Pátios: '+d.ymsPatios:''}.</li>`);
+  objBulletsGestao.push(`<li><b>Integração ERP (${d.erp.tipo==='ws'?'Webservice':d.erp.tipo==='txt'?'Arquivo Texto':'Banco Tanque'}):</b> ${d.erp.tipo==='ws'?'Receber pré-cadastros e exportar dados de pesagem para o '+(d.erp.nome||'ERP')+' via WebService, eliminando digitação manual e garantindo rastreabilidade.':d.erp.tipo==='txt'?'Importar pré-cadastros e exportar dados de pesagem para o '+(d.erp.nome||'ERP')+' via arquivo texto (SIG) em pasta de rede compartilhada.':'Integrar com o '+(d.erp.nome||'ERP')+' via banco de dados intermediário (banco tanque) para troca de informações de cadastro e pesagem.'}</li>`);
+  // Manter compatibilidade com código que usa objBullets (nenhum uso restante, mas por segurança)
+  const objBullets=[...objBulletsCad,...objBulletsGestao];
 
   // ── Tabelas composição ──
   const swTable=d.sw.length>0?`<table><thead><tr><th>Item/Código</th><th>Qtde</th><th>Descrição</th></tr></thead><tbody>${d.sw.map(s=>`<tr><td style="font-family:monospace">${s.code}</td><td style="text-align:center">${s.qty}</td><td>${s.desc}</td></tr>`).join('')}</tbody></table>`:'<p><em>Itens de software a detalhar conforme OV.</em></p>';
@@ -2355,16 +2364,28 @@ a{color:#1a3a6b}
   <tr><td>Informática Industrial / TI</td><td>${d.resp.cliente.ti.n||'—'}</td><td>${d.resp.cliente.ti.e||'—'}</td></tr>
   <tr><td>Responsável pela Operação / Processo</td><td>${d.resp.cliente.op.n||'—'}</td><td>${d.resp.cliente.op.e||'—'}</td></tr>
 </tbody></table>
+<p><b>Notas importantes:</b></p>
+<ul>
+  <li>Os responsáveis pela TI, operação e o gerente obrigatoriamente deverão participar da implantação e da entrega após a implantação. Para manutenção do banco de dados, o responsável pela TI deve conhecer SQL Server.</li>
+  <li>Sem estas pessoas de contato no cliente, devidamente treinadas no Guardian, a Toledo do Brasil se exime da responsabilidade pelo correto e satisfatório funcionamento do sistema.</li>
+</ul>
 
 <h1>3) Objetivo da Solução</h1>
-<p>A solução Guardian PRO será implementada em <b>${d.clientName}</b>${d.clientUnit?' — '+d.clientUnit:''} para automatizar e controlar as operações de pesagem e acesso de veículos. O sistema será composto por <b>${d.pcs.length} ponto(s) de controle</b> (${d.pcs.map(p=>p.num+(p.name?' — '+p.name:'')).join(', ')||'a definir'}), com ${d.fluxos.length>0?d.fluxos.length+' fluxo(s) configurado(s): '+d.fluxos.map(f=>f.name).join(', '):'fluxos a definir conforme aprovação deste descritivo'}.</p>
-<p>Os principais objetivos da solução incluem:</p>
-<ul>${objBullets.join('')}</ul>
+<p>Fornecer uma solução para controle de acesso de caminhões, disponibilizando informações para gerenciamento das operações de recebimento e expedição de materiais e produtos, proporcionando segurança no processo de pesagem, com redução de erros operacionais e agilidade no fluxo de veículos.</p>
+<p><b>Cadastramento</b></p>
+<ul>${objBulletsCad.join('')}</ul>
+<p><b>Gestão</b></p>
+<ul>${objBulletsGestao.join('')}</ul>
+<p><b>Guardian PRO:</b></p>
+<p>O Guardian é um sistema de gerenciamento das operações de pesagem para recebimento e expedição de materiais diversos, proporcionando segurança na pesagem de veículos, reduzindo a possibilidade de erros nos processos e agilizando as operações.</p>
+<p>O gerenciamento é realizado utilizando o conceito de pesagem inicial e final, onde o peso líquido será a diferença entre as duas pesagens:</p>
+<p style="text-align:center"><b>Peso líquido = | Pesagem inicial – Pesagem final |</b></p>
+<p>O peso líquido será o peso da carga do veículo. Uma pesagem inicial com peso superior ao da pesagem final caracteriza uma operação de recebimento de carga, enquanto uma pesagem final com peso superior à pesagem inicial caracteriza uma operação de expedição. Todos os dados de pesagem e acessos de veículos serão registrados em banco de dados do sistema Guardian.</p>
 
 <h1>4) Objetivo do Descritivo Funcional</h1>
-<p>O objetivo deste documento é descrever as funcionalidades exigidas no Guardian para atendimento das necessidades apresentadas para os processos de pesagem, durante as reuniões realizadas com a Toledo do Brasil.</p>
-<p>Serão apresentados: a descrição, o funcionamento e o fluxo de dados das operações da solução, entre outros detalhes das operações do terminal.</p>
-<p>Mediante a aprovação do cliente, este documento servirá de base e referência para:</p>
+<p>O objetivo deste documento é descrever as funcionalidades exigidas no sistema Guardian para atendimento das necessidades apresentadas por <b>${d.clientName}</b>.</p>
+<p>Serão apresentadas: a descrição, o funcionamento, o fluxo de veículos, entre outros detalhes das operações da solução.</p>
+<p>Mediante a aprovação de <b>${d.clientName}</b>, este documento servirá de base e referência para:</p>
 <ul>
   <li><b>Configuração</b> da solução Guardian a ser instalada;</li>
   <li><b>Treinamento</b> operacional dos usuários;</li>
@@ -2384,7 +2405,12 @@ ${hwTable}
 <h1>6) Arquitetura Ilustrativa da Solução</h1>
 <p>A solução Guardian PRO é composta por módulos integrados que permitem o controle total do processo de pesagem e acesso de veículos. O software é executado em estações de trabalho (PCs) distribuídas nos pontos de controle e se comunica em tempo real com o servidor central Guardian e com a plataforma Cloud Prix.</p>
 <img data-gimg="arq_solucao">
-<p>Cada ponto de controle é equipado com hardware específico para sua função — leitores de transponder RFID, cancelas automáticas, semáforos, displays, impressoras e câmeras — controlados pelo módulo MCA (Módulo de Controle de Automação) do Guardian, que gerencia os periféricos de forma automática conforme as regras do fluxo configurado.</p>
+<p><b>Notas:</b></p>
+<ul>
+  <li>ESTA É UMA ARQUITETURA ILUSTRATIVA. É de responsabilidade do cliente definir a configuração da rede de comunicação e fornecer os equipamentos adequados para garantir a performance da solução.</li>
+  <li>Projeto executivo, materiais (eletrodutos, quadro de distribuição de energia elétrica, caixas de passagem, envelopes) e instalação da rede elétrica e da rede de dados necessários para o funcionamento do sistema são de responsabilidade do cliente.</li>
+  <li>Toda infraestrutura de rede e elétrica (inclusive switches) são de responsabilidade do cliente.</li>
+</ul>
 
 <h1>7) Fluxos (Rotas)</h1>
 <p>Os fluxos determinam os acessos permitidos pelo Guardian e o tipo das operações que serão realizadas para o veículo cadastrado. Esta informação é obrigatória no cadastro de cada veículo e o Ticket será encerrado automaticamente no último ponto do fluxo.</p>
