@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.37",
+    "data": "2026-04-02",
+    "categoria": "Manutencao",
+    "descricao": "Atualização",
+    "responsavel": ""
+  },
+  {
     "versao": "v1.0.36",
     "data": "2026-04-02",
     "categoria": "Melhoria",
