@@ -571,7 +571,7 @@ function htmlToParas(html, imgs) {
       for (const li of lis) {
         const runs = parseInlineRuns(li[1]);
         if (runs.length) result.push(new Paragraph({
-          spacing: spacingPara(20, 80),
+          spacing: spacingPara(20, 20),
           numbering: { reference: 'bullets', level: 0 },
           children: runs
         }));
@@ -585,21 +585,27 @@ function htmlToParas(html, imgs) {
       const inner = pm[1].trim();
       if (!inner) continue;
       const runs = parseInlineRuns(inner);
-      if (runs.length) result.push(new Paragraph({
-        alignment: AlignmentType.JUSTIFY,
-        spacing: spacingPara(60, 160),
-        children: runs
-      }));
+      if (runs.length) {
+        result.push(new Paragraph({
+          alignment: AlignmentType.JUSTIFY,
+          spacing: spacingPara(40, 40),
+          children: runs
+        }));
+        result.push(emptyPara(20, 20)); // linha em branco entre parágrafos
+      }
       continue;
     }
 
     // Texto puro / fallback
     const text = decodeHtml(s.replace(/<[^>]+>/g,'').trim());
-    if (text && text.length > 1) result.push(new Paragraph({
-      alignment: AlignmentType.JUSTIFY,
-      spacing: spacingPara(60, 160),
-      children: [new TextRun({ text, font: 'Arial', size: 22 })]
-    }));
+    if (text && text.length > 1) {
+      result.push(new Paragraph({
+        alignment: AlignmentType.JUSTIFY,
+        spacing: spacingPara(40, 40),
+        children: [new TextRun({ text, font: 'Arial', size: 22 })]
+      }));
+      result.push(emptyPara(20, 20));
+    }
   }
 
   return result;
@@ -778,66 +784,7 @@ async function buildDoc(data) {
   capaContent.push(new TableOfContents('Índice', { hyperlink: true, headingStyleRange: '1-3' }));
   capaContent.push(pageBreak());
 
-  // ═══════════════════════════════════════════════════════
-  // SEÇÃO 1: PERFIL DO CLIENTE (página dedicada, logo após o Índice)
-  // ═══════════════════════════════════════════════════════
-  capaContent.push(h1('1) Perfil do Cliente'));
-  capaContent.push(emptyPara(20, 20));
-
-  // Imagem da unidade/planta do cliente (centralizada, largura máx 14cm)
-  if (clientImgb64) {
-    try {
-      const b64clean = clientImgb64.includes('base64,') ? clientImgb64.split('base64,')[1] : clientImgb64;
-      const bufImg   = Buffer.from(b64clean, 'base64');
-      const extImg   = clientImgb64.startsWith('data:image/jpeg') ? 'jpg' : 'png';
-      const ratio    = getImageAspectRatio(bufImg, extImg);  // h/w
-      const wImg     = 14.0;
-      const hImg     = Math.min(wImg * ratio, 10.0);
-      const imgPars  = imgPara(clientImgb64, wImg, '', { before: 40, after: 60, hCm: hImg });
-      if (imgPars) capaContent.push(...imgPars);
-    } catch (e) {
-      process.stderr.write(`Imagem perfil cliente falhou: ${e.message}\n`);
-    }
-  }
-
-  // Texto descritivo do cliente
-  if (clientDesc) {
-    // Quebra por parágrafos (o campo pode conter \n ou \n\n)
-    const descParas = clientDesc.split(/\n+/).map(t => t.trim()).filter(t => t.length > 0);
-    for (const txt of descParas) {
-      capaContent.push(new Paragraph({
-        alignment: AlignmentType.JUSTIFY,
-        spacing: spacingPara(40, 40),
-        children: [new TextRun({ text: txt, font: 'Arial', size: 22 })]
-      }));
-    }
-  }
-
-  // Referências documentais (OV / CT)
-  const clientNameRef = data.clientName || 'o Cliente';
-  capaContent.push(new Paragraph({
-    alignment: AlignmentType.JUSTIFY,
-    spacing: spacingPara(60, 40),
-    children: [new TextRun({ text: `Este descritivo foi elaborado com base nas reuniões de levantamento de requisitos realizadas entre a Toledo do Brasil e ${clientNameRef}, tendo como referência:`, font: 'Arial', size: 22 })]
-  }));
-  if (data.ctHardware) capaContent.push(new Paragraph({
-    spacing: spacingPara(20, 20),
-    numbering: { reference: 'bullets', level: 0 },
-    children: [
-      new TextRun({ text: 'Ordem de Venda / Contrato de Hardware e Serviços: ', font: 'Arial', size: 22 }),
-      new TextRun({ text: data.ctHardware, font: 'Arial', size: 22, bold: true })
-    ]
-  }));
-  if (data.ctCloud) capaContent.push(new Paragraph({
-    spacing: spacingPara(20, 20),
-    numbering: { reference: 'bullets', level: 0 },
-    children: [
-      new TextRun({ text: 'Contrato Licenciamento Cloud Prix: ', font: 'Arial', size: 22 }),
-      new TextRun({ text: data.ctCloud, font: 'Arial', size: 22, bold: true })
-    ]
-  }));
-
-  capaContent.push(pageBreak());
+  // (Seção "Perfil do Cliente" removida — conteúdo agora está em "1) Responsáveis")
 
   // ═══════════════════════════════════════════════════════
   // CONTEÚDO HTML (seções técnicas geradas pelo builder)

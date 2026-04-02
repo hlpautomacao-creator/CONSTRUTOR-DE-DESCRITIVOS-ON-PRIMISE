@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.39",
+    "data": "2026-04-02",
+    "categoria": "Melhoria",
+    "descricao": "Remove secao Perfil do Cliente (doc e UI); linha em branco entre paragrafos no htmlToParas; tipos PC: BALANCA (9 operacoes), ACESSO (Entrada/Saida/Checkpoint/Checkin), CADASTRAMENTO (Pre-Cadastro), OUTRO (Admin/Filas/Inspecao/Visitantes); remove TULHA; Inspecao com campo de itens; Agendamento com campo de agendas; Guardian Facil com modo Check-In/CDC; secoes renumeradas 1-7 (era 2-8)",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.38",
     "data": "2026-04-02",
     "categoria": "Melhoria",

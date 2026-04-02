@@ -326,13 +326,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
       <div class="field"><label>Data do Documento</label><input type="date" id="docDate"></div>
       <div class="field"><label>Descrição da Revisão</label><input type="text" id="revDesc" value="Geração do documento"></div>
     </div>
-    <div class="divider"><h3>Sobre o Cliente</h3></div>
-    <div class="form-grid">
-      <div class="field form-full">
-        <label>Descrição do cliente e contexto do projeto <span class="hint">(seção "Sobre o Cliente" — opcional, texto livre)</span></label>
-        <textarea id="clientDesc" rows="3" placeholder="Ex: A Fazenda Serra Boa é uma unidade agroindustrial localizada em Palmeira do Piauí - PI, operada pelo grupo CGB. A unidade realiza operações de recebimento e expedição de grãos..."></textarea>
-      </div>
-    </div>
     <div class="divider"><h3>Logo do Cliente</h3></div>
     <div class="info">Upload do logotipo do cliente. Aparece no <strong>canto superior esquerdo da capa</strong>, ao lado do logo Toledo.</div>
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px">
@@ -352,24 +345,6 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
       </div>
     </div>
 
-    <div class="divider"><h3>Foto da unidade / planta do cliente</h3></div>
-    <div class="info">Foto ou imagem da unidade do cliente. Aparece na capa do descritivo abaixo do nome do cliente.</div>
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
-      <div id="clientImgPreview" style="width:280px;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;overflow:hidden;flex-shrink:0">
-        Nenhuma imagem carregada
-      </div>
-      <div style="flex:1;min-width:200px">
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-block;margin-bottom:8px">
-          📁 Selecionar foto da unidade...
-          <input type="file" id="clientImgFile" accept="image/*" style="display:none" onchange="loadClientImg(this)">
-        </label>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">
-          Formatos aceitos: JPG, PNG<br>
-          Tamanho recomendado: 800×400px ou maior<br>
-          <button class="btn-add" style="margin-top:6px;padding:3px 10px" onclick="clearClientImg()">✕ Remover foto</button>
-        </div>
-      </div>
-    </div>
   </div>
   <div class="panel-nav"><div class="panel-nav-info">Campos <span style="color:var(--danger)">*</span> obrigatórios</div><button class="btn btn-primary" onclick="goTo(1)">Próximo →</button></div>
 </div>
@@ -638,8 +613,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
     <div class="mod-grid">
       <div class="check-row" id="mod_fila" onclick="toggleMod('mod_fila')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Controle de Filas <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Sequência de chamada, crédito/débito automático, exibição em painel TV.</div></div></div>
       <div class="check-row" id="mod_inspecao" onclick="toggleMod('mod_inspecao')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Inspeção Veicular (Checklist) <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Checklist via dispositivo móvel Android, perguntas configuráveis.</div></div></div>
-      <div class="check-row" id="mod_tulha" onclick="toggleMod('mod_tulha')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Controle de Acesso à Tulha <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Bloqueio de entrada não autorizada, controle de vaga (um por vez).</div></div></div>
-      <div class="check-row" id="mod_moega" onclick="toggleMod('mod_moega')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Checkpoint Moega <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Consistência de passagem obrigatória via dispositivo móvel.</div></div></div>
+      <div class="check-row" id="mod_moega" onclick="toggleMod('mod_moega')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Checkpoint <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Consistência de passagem obrigatória via dispositivo móvel.</div></div></div>
       <div class="check-row" id="mod_relatorio" onclick="toggleMod('mod_relatorio')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Relatórios e Exportações <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Relatórios de pesagem, tempo de permanência, histórico de passagem. Export Excel/PDF.</div></div></div>
       <div class="check-row" id="mod_campos" onclick="toggleMod('mod_campos')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Campos Adicionais <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Campos customizados por operação para captura de dados específicos.</div></div></div>
       <div class="check-row" id="mod_gw" onclick="toggleMod('mod_gw')"><div class="check-box"><span class="chk">✓</span></div><div class="check-content"><div class="check-title">Gestor Web (GW) <span class="mod-badge badge-local">ON-PREMISE</span></div><div class="check-sub">Consulta de operações e detalhe de ticket via browser. Relatórios web.</div></div></div>
@@ -677,6 +651,51 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
         <div id="patiosBody"></div>
       </div>
       <button class="btn-add" onclick="addPatio()">+ Adicionar Pátio</button>
+    </div>
+
+    <!-- CONFIGURAÇÃO DE INSPEÇÃO (aparece só se mod_inspecao ativo) -->
+    <div id="sec_inspecao" style="display:none">
+      <div class="divider"><h3>⚙ Configuração — Inspeção Veicular (Checklist)</h3></div>
+      <div class="info">Informe os itens/tópicos/perguntas que serão configurados no app mobile para o operador realizar a inspeção do veículo.</div>
+      <div class="field">
+        <label>Itens de inspeção <span class="hint">(um por linha)</span></label>
+        <textarea id="inspecaoItens" rows="5" placeholder="Ex:&#10;Condições do pneu traseiro esquerdo&#10;Condições do pneu traseiro direito&#10;Lonas/telas cobrindo a carga&#10;Verificação de lacre&#10;Estado da carroceria"></textarea>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÃO DE AGENDAMENTO (aparece só se mod_agend ativo) -->
+    <div id="sec_agend" style="display:none">
+      <div class="divider"><h3>⚙ Configuração — Módulo Agendamento</h3></div>
+      <div class="info">Descreva as agendas que serão configuradas no sistema (nome e finalidade). A configuração detalhada de disponibilidade será definida em fase posterior.</div>
+      <div class="field">
+        <label>Agendas <span class="hint">(descrição de cada agenda, uma por linha)</span></label>
+        <textarea id="agendaDesc" rows="4" placeholder="Ex:&#10;Agenda Recebimento de Grãos — Veículos de recebimento, janelas de 30 min, limite de 4 veículos por janela&#10;Agenda Expedição — Veículos de expedição, janelas de 60 min"></textarea>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÃO DE GUARDIAN FÁCIL (aparece só se mod_facil ativo) -->
+    <div id="sec_facil" style="display:none">
+      <div class="divider"><h3>⚙ Configuração — Guardian Fácil (APP)</h3></div>
+      <div class="info">O Guardian Fácil possui dois modos de uso distintos. Selecione como será utilizado neste projeto.</div>
+      <div class="field">
+        <label>Modo de uso do Guardian Fácil</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <label class="check-row" style="cursor:pointer;margin:0">
+            <input type="checkbox" id="facil_checkin" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0">
+            <div class="check-content">
+              <div class="check-title">Check-In do Motorista</div>
+              <div class="check-sub">O motorista informa sua chegada pelo app, acompanha posição na fila e recebe alertas de convocação sem sair do caminhão.</div>
+            </div>
+          </label>
+          <label class="check-row" style="cursor:pointer;margin:0">
+            <input type="checkbox" id="facil_cdc" style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0">
+            <div class="check-content">
+              <div class="check-title">CDC — Coleta de Dados de Campo</div>
+              <div class="check-sub">O operador preenche formulário no app com dados da colheita/campo. Utilizado por noteiros para registrar informações de campo diretamente no sistema.</div>
+            </div>
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="divider"><h3>Observações finais</h3></div>
@@ -875,11 +894,10 @@ const EQUIP_CADASTRO = [
   {key:'intercomunicador',label:'Intercomunicador',sub:'Comunicação de voz'},
 ];
 const PC_TYPES = {
-  'balanca':  {label:'Balança',        cls:'pc-type-balanca',  equip:EQUIP_BALANCA},
-  'acesso':   {label:'Portaria/Acesso',cls:'pc-type-acesso',   equip:EQUIP_ACESSO},
-  'tulha':    {label:'Tulha/Carga',    cls:'pc-type-acesso',   equip:EQUIP_ACESSO},
-  'cadastro': {label:'Cadastramento',  cls:'pc-type-cadastro', equip:EQUIP_CADASTRO},
-  'outro':    {label:'Outro',          cls:'pc-type-outro',    equip:[]},
+  'balanca':  {label:'Balança',       cls:'pc-type-balanca',  equip:EQUIP_BALANCA},
+  'acesso':   {label:'Acesso',        cls:'pc-type-acesso',   equip:EQUIP_ACESSO},
+  'cadastro': {label:'Cadastramento', cls:'pc-type-cadastro', equip:EQUIP_CADASTRO},
+  'outro':    {label:'Outro',         cls:'pc-type-outro',    equip:[]},
 };
 
 function addPC(num='',name='',tipo='outro',equip={},desc='',expanded=false){
@@ -897,7 +915,7 @@ function buildPCHTML(id,num,name,tipo,equip,desc,expanded){
   var safeName=(name||'').replace(/"/g,'&quot;');
   var safeDesc=(desc||'').replace(/"/g,'&quot;');
   var typeOpts='';
-  ['balanca','acesso','tulha','cadastro','outro'].forEach(function(k){
+  ['balanca','acesso','cadastro','outro'].forEach(function(k){
     typeOpts+='<option value="'+k+'"'+(k===tipo?' selected':'')+'>'+PC_TYPES[k].label+'</option>';
   });
   var equipPanel='';
@@ -1297,11 +1315,10 @@ function rmFX(id){flxItems=flxItems.filter(x=>x!==id);document.getElementById('f
 
 // ─── Operações por PC ────────────────────────────────────────────
 const PC_OPS = {
-  balanca:  ['Pesagem Inicial','Pesagem Final','Pesagem Avulsa','Pesagem de Conferência'],
-  acesso:   ['Acesso de Entrada','Acesso de Saída','Controle de Fila'],
-  tulha:    ['Acesso Entrada Carregamento','Acesso Saída Carregamento'],
-  cadastro: ['Cadastramento','Pré-Cadastro'],
-  outro:    ['Administrativo','Monitoramento','Checkpoint','Outro'],
+  balanca:  ['Pesagem Inicial','Pesagem Final','Pesagem Avulsa','Atualização de Tara manual','Pesagem por Eixo','Dosagem','Pesagem por Compartimento','Pesagem de Cavalo (Inicial)','Pesagem de Cavalo (Final)'],
+  acesso:   ['Acesso Entrada','Acesso Saída','Checkpoint','Checkin'],
+  cadastro: ['Pré-Cadastro'],
+  outro:    ['Administrativo','Monitoramento de filas','Inspeção','Movimentação de Visitantes'],
 };
 
 function buildOpPCList(){
@@ -1397,6 +1414,18 @@ function toggleMod(id){
     var sec = document.getElementById('sec_patios');
     if(sec) sec.style.display = isOn('mod_yms')?'block':'none';
   }
+  if(id==='mod_inspecao'){
+    var sec = document.getElementById('sec_inspecao');
+    if(sec) sec.style.display = isOn('mod_inspecao')?'block':'none';
+  }
+  if(id==='mod_agend'){
+    var sec = document.getElementById('sec_agend');
+    if(sec) sec.style.display = isOn('mod_agend')?'block':'none';
+  }
+  if(id==='mod_facil'){
+    var sec = document.getElementById('sec_facil');
+    if(sec) sec.style.display = isOn('mod_facil')?'block':'none';
+  }
 }
 
 function buildPCSelectForFila(selected){
@@ -1460,8 +1489,8 @@ function buildPreview(){
     var pcsStr=seq.map(function(s){return s.num+(s.name?' ('+s.name+')':'');}).join(' → ');
     return {code:g('fxcode_'+id),name:g('fxname_'+id),pcs:pcsStr};
   });
-  const mods=['mod_fila','mod_inspecao','mod_tulha','mod_moega','mod_yms','mod_agend','mod_cloud','mod_facil','mod_gw','mod_ad','mod_relatorio','mod_campos'].filter(m=>isOn(m));
-  const modLabels={'mod_fila':'Filas','mod_inspecao':'Inspeção Veicular','mod_tulha':'Tulha/Carregamento','mod_moega':'Checkpoint Moega','mod_yms':'YMS (Pátios)','mod_agend':'Agendamento','mod_cloud':'Cloud Prix','mod_facil':'Guardian Fácil','mod_gw':'Gestor Web','mod_ad':'Autenticação AD','mod_relatorio':'Relatórios','mod_campos':'Campos Adicionais'};
+  const mods=['mod_fila','mod_inspecao','mod_moega','mod_yms','mod_agend','mod_cloud','mod_facil','mod_gw','mod_ad','mod_relatorio','mod_campos'].filter(m=>isOn(m));
+  const modLabels={'mod_fila':'Filas','mod_inspecao':'Inspeção Veicular','mod_moega':'Checkpoint','mod_yms':'YMS (Pátios)','mod_agend':'Agendamento','mod_cloud':'Cloud Prix','mod_facil':'Guardian Fácil','mod_gw':'Gestor Web','mod_ad':'Autenticação AD','mod_relatorio':'Relatórios','mod_campos':'Campos Adicionais'};
   document.getElementById('sumGrid').innerHTML=`
     <div class="sum-card"><div class="sum-label">Cliente</div><div class="sum-val" style="font-size:15px;font-family:var(--font)">${g('clientName')||'—'}</div><div class="sum-sub">${g('clientCity')||'—'}${document.getElementById('clientSegmento')?.value?' · '+document.getElementById('clientSegmento').value:''}</div></div>
     <div class="sum-card"><div class="sum-label">Analista</div><div class="sum-val" style="font-size:15px;font-family:var(--font)">${g('analystName')||'—'}</div><div class="sum-sub">${g('docRevision')} · ${g('docDate')||'—'}</div></div>
@@ -1518,7 +1547,7 @@ function collect(){
       saidaTipo:getExcl('tg_saida'), saidaObs:g('op_saida_obs'), especiais:g('op_especiais')
     },
     mods:{
-      fila:isOn('mod_fila'), inspecao:isOn('mod_inspecao'), tulha:isOn('mod_tulha'),
+      fila:isOn('mod_fila'), inspecao:isOn('mod_inspecao'),
       moega:isOn('mod_moega'), yms:isOn('mod_yms'), agend:isOn('mod_agend'),
       cloud:isOn('mod_cloud'), facil:isOn('mod_facil'), gw:isOn('mod_gw'),
       ad:isOn('mod_ad'), relatorio:isOn('mod_relatorio'), campos:isOn('mod_campos')
@@ -1527,6 +1556,9 @@ function collect(){
     filas:filaItems.map(function(id){return {name:g('flname_'+id),cred:document.getElementById('flcred_'+id)?.value||'',deb:document.getElementById('fldeb_'+id)?.value||''};}),
     patios:patioItems.map(function(id){return {name:g('ptname_'+id),cred:document.getElementById('ptcred_'+id)?.value||'',deb:document.getElementById('ptdeb_'+id)?.value||'',max:g('ptmax_'+id)};}),
     opsByPC:pcItems.reduce(function(acc,pcId){acc[pcId]=getOpsByPC(pcId);return acc;},{}),
+    inspecaoItens:g('inspecaoItens'),
+    agendaDesc:g('agendaDesc'),
+    facilModo:{checkin:!!document.getElementById('facil_checkin')?.checked, cdc:!!document.getElementById('facil_cdc')?.checked},
     obsFinais:g('obsFinais')
   };
 }
@@ -1641,7 +1673,7 @@ function buildDoc(d){
   const txtIfMap={'txt_export':'<b>Exportação dos dados de pesagem</b> — Arquivos de exportação possuem dados que o Guardian disponibilizará para o sistema do cliente. Gerados na pasta de rede configurada na pesagem inicial e final.','txt_import':'<b>Importação — Pré-marcação (Cadastramento dos veículos)</b> — ERP envia arquivo texto com o pré-cadastro do veículo para o Guardian.','txt_altera':'<b>Importação — Alteração/Atualização do cadastro</b> — ERP envia arquivo texto com alterações ou atualizações das informações do veículo para o Guardian.','txt_cancela':'<b>Importação — Cancelar tíquete</b> — ERP envia arquivo texto com cancelamento do tíquete do veículo para o Guardian.','txt_bloqueio':'<b>Importação — Bloquear/Desbloquear tíquete</b> — ERP envia arquivo texto para desbloqueio do tíquete no Guardian após emissão da Nota Fiscal.'};
 
   const erpSection=d.erp.tipo==='ws'?`
-<h1>8) Fluxo de Dados — WebService</h1>
+<h1>7) Fluxo de Dados — WebService</h1>
 <p>A integração entre o sistema ERP do cliente (<b>${d.erp.nome||'ERP'}</b>) e o Guardian será realizada via <b>WebService</b> — modalidade <b>${d.erp.mode||'Modo Passivo'}</b>.</p>
 <h2>8.1)Definições da Interface WebService</h2>
 <p>O Guardian disponibiliza um WebService para que o ERP possa realizar chamadas de cadastro, alteração, cancelamento e consulta de tickets. No modo ativo, o Guardian também envia dados de pesagem encerrada diretamente ao ERP.</p>
@@ -1654,7 +1686,7 @@ function buildDoc(d){
 ${d.erp.resp?`<h2>8.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 `
 :d.erp.tipo==='txt'?`
-<h1>8) Fluxo de Dados — Arquivo Texto (SIG)</h1>
+<h1>7) Fluxo de Dados — Arquivo Texto (SIG)</h1>
 <p>Abaixo descrevemos a interface de dados via arquivo texto entre o software Guardian de gerenciamento de pesagens da Toledo do Brasil e o sistema corporativo (ERP) <b>${d.erp.nome||''}</b>.</p>
 <h2>8.1)Definições da Interface Arquivo Texto</h2>
 <ul>
@@ -1671,7 +1703,7 @@ ${d.erp.resp?`<h2>8.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''
 <p>A tabela de logs registra toda atividade ocorrida no software Guardian — sucesso, falha de comunicação, falha de rede ou envio manual de dados. Existem logs separados para a aplicação e periféricos.</p>
 ${d.erp.resp?`<h2>8.5) Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 `:`
-<h1>8) Fluxo de Dados — Banco Tanque</h1>
+<h1>7) Fluxo de Dados — Banco Tanque</h1>
 <p>A integração entre o ERP (<b>${d.erp.nome||'ERP'}</b>) e o Guardian será realizada via <b>banco de dados intermediário (banco tanque)</b>.</p>
 ${d.erp.btSGBD?`<p><b>SGBD:</b> ${d.erp.btSGBD}</p>`:''}
 ${d.erp.btBanco?`<p><b>Banco intermediário:</b> ${d.erp.btBanco}</p>`:''}
@@ -1682,7 +1714,7 @@ ${d.erp.resp?`<h2>Responsabilidades do Cliente</h2><p>${d.erp.resp}</p>`:''}
 `;
 
   // ── Operações condicionais por PC ──
-  let secNum=9;
+  let secNum=8;
   const pcOps=[];
 
   // Cadastramento
@@ -1709,13 +1741,18 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
 `);
 
   // Inspeção Veicular
-  if(d.mods.inspecao) pcOps.push(`
+  if(d.mods.inspecao) {
+    const inspecaoItensHtml = d.inspecaoItens
+      ? d.inspecaoItens.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(s=>`<li>${s}</li>`).join('')
+      : '<li>Itens a definir com o cliente durante implantação.</li>';
+    pcOps.push(`
 <h1>${secNum++}) Descrição da Operação — Inspeção Veicular (Checklist)</h1>
 <p>Este ponto tem como objetivo realizar a inspeção veicular (checklist) dos veículos, após o cadastro. Permitirá apenas a inspeção de caminhões autorizados conforme fluxo pré-definido no cadastro.</p>
+<h2>Itens de inspeção configurados</h2>
+<ul>${inspecaoItensHtml}</ul>
 <h2>Requisitos do sistema de inspeção</h2>
 <ul>
   <li>Sistema operacional <b>Android</b>;</li>
-  <li>As perguntas da inspeção serão configuradas no Guardian conforme definição do cliente;</li>
   <li>O veículo somente será aprovado se <b>todas as respostas forem SIM</b>. Com qualquer resposta NÃO, o veículo é reprovado e não poderá seguir para o próximo ponto;</li>
   <li>Para liberação de veículos reprovados, um responsável com permissão (login e senha) deverá acessar a tela de manutenção do Guardian, justificar e liberar ou cancelar o ticket;</li>
   <li>A inspeção é uma <b>operação com intervenção humana</b>, depende de ticket existente e será incluída no fluxo;</li>
@@ -1726,6 +1763,7 @@ ${d.mods.fila?`<h2>Crédito na Fila</h2><p>Após o Guardian receber os dados cad
 <img data-gimg="tela_inspecao">
 <div class="obs"><b>Obs.:</b> O fornecimento da estrutura de Wi-Fi para comunicação com o banco de dados do Guardian é de responsabilidade do cliente.</div>
 `);
+  }
 
   // Portaria Entrada — sequência completa por equipamento
   {
@@ -2055,9 +2093,16 @@ ${d.ymsPatios?`<h2>Pátios configurados neste projeto</h2><p>${d.ymsPatios}</p>`
 <img data-gimg="tela_patio_yms">
 `);
 
-  if(d.mods.agend) modSections.push(`
+  if(d.mods.agend) {
+    const agendaItensHtml = d.agendaDesc
+      ? d.agendaDesc.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(s=>`<li>${s}</li>`).join('')
+      : '<li>Agendas a definir com o cliente durante implantação.</li>';
+    modSections.push(`
 <h1>${secNum++}) Módulo Agendamento</h1>
 <p>O Módulo Agendamento permite que motoristas agendem seu horário de chegada à unidade pelo aplicativo Guardian Fácil, garantindo controle de janelas de atendimento e reduzindo filas na portaria.</p>
+<h2>Agendas configuradas neste projeto</h2>
+<ul>${agendaItensHtml}</ul>
+<h2>Funcionamento</h2>
 <ul>
   <li>O motorista realiza o agendamento pelo app informando placa, produto e janela de horário desejada;</li>
   <li>O Guardian valida a disponibilidade de vagas na janela solicitada e confirma ou sugere novo horário;</li>
@@ -2065,6 +2110,7 @@ ${d.ymsPatios?`<h2>Pátios configurados neste projeto</h2><p>${d.ymsPatios}</p>`
   <li>Veículos fora da janela agendada podem ser configurados para aguardar uma posição na fila comum.</li>
 </ul>
 `);
+  }
 
   if(d.mods.cloud) modSections.push(`
 <h1>${secNum++}) Análise e Gestão de Tickets (Guardian / Cloud Prix)</h1>
@@ -2080,17 +2126,35 @@ ${d.ymsPatios?`<h2>Pátios configurados neste projeto</h2><p>${d.ymsPatios}</p>`
 </ul>
 `);
 
-  if(d.mods.facil) modSections.push(`
-<h1>${secNum++}) Chamada de Motorista — Guardian Fácil (APP)</h1>
-<p>O Guardian Fácil é o aplicativo Android para motoristas que permite acompanhar a posição na fila e receber alertas sem precisar sair do caminhão.</p>
-<h2>Funcionalidades</h2>
+  if(d.mods.facil) {
+    const facilModo = d.facilModo || {};
+    const facilModos = [];
+    if(facilModo.checkin) facilModos.push('checkin');
+    if(facilModo.cdc) facilModos.push('cdc');
+    const facilCheckinSection = facilModo.checkin ? `
+<h2>Check-In do Motorista</h2>
+<p>Neste projeto, o Guardian Fácil será utilizado no modo <b>Check-In do Motorista</b>. Ao chegar na planta, o motorista realiza check-in pelo app sem precisar sair do caminhão.</p>
 <ul>
   <li><b>Check-in:</b> ao chegar na planta, o motorista realiza check-in pelo app (via QR Code, GPS ou código da unidade). O Guardian registra a chegada e inclui o veículo na fila;</li>
   <li><b>Acompanhamento:</b> motorista visualiza posição na fila em tempo real;</li>
   <li><b>Convocação:</b> quando chegar a vez, o app emite alerta com informações de entrada (local, hora, data e QR Code do ticket);</li>
   <li><b>Finalização:</b> ao encerrar, o motorista confirma no app e visualiza os dados de pesagem (peso bruto, tara e líquido).</li>
-</ul>
+</ul>` : '';
+    const facilCdcSection = facilModo.cdc ? `
+<h2>CDC — Coleta de Dados de Campo</h2>
+<p>Neste projeto, o Guardian Fácil será utilizado no modo <b>Coleta de Dados de Campo (CDC)</b>. O operador (noteiro) preenche formulário no app com dados da colheita/campo, registrando informações diretamente no sistema Guardian.</p>
+<ul>
+  <li>O operador acessa o app com suas credenciais e seleciona o formulário de coleta correspondente à operação;</li>
+  <li>Os dados informados são transmitidos em tempo real ao Guardian via internet;</li>
+  <li>As informações ficam vinculadas ao ticket do veículo para rastreabilidade completa da operação.</li>
+</ul>` : '';
+    modSections.push(`
+<h1>${secNum++}) Guardian Fácil — APP</h1>
+<p>O Guardian Fácil é o aplicativo Android utilizado em operações que exigem mobilidade. Neste projeto será utilizado nas seguintes modalidades: <b>${!facilModo.checkin&&!facilModo.cdc?'a definir':[(facilModo.checkin?'Check-In do Motorista':''),(facilModo.cdc?'Coleta de Dados de Campo (CDC)':'')].filter(Boolean).join(' e ')}</b>.</p>
+${facilCheckinSection}
+${facilCdcSection}
 `);
+  }
 
   if(d.mods.gw) modSections.push(`
 <h1>${secNum++}) Gestor Web (GW)</h1>
@@ -2346,7 +2410,7 @@ a{color:#1a3a6b}
 
 <div class="pbk"></div>
 
-<h1>2) Responsáveis pelo Guardian no Cliente</h1>
+<h1>1) Responsáveis pelo Guardian no Cliente</h1>
 <p>Os responsáveis serão os únicos contatos no cliente, acompanharão os processos de validação da configuração e treinamento na Toledo (quando aplicável), supervisão de instalação, startup e treinamento dos operadores locais. Após a finalização da implantação, serão responsáveis pelos contatos com Toledo e pela orientação dos operadores da fábrica.</p>
 <p>Estas pessoas devem ter conhecimentos de Windows a nível técnico e vivência dos processos. O sucesso do sistema depende necessariamente do trabalho destas pessoas, cumprindo atividades de difusão e apoio técnico-operacional. Pessoas ligadas à informática e com conhecimento operacional dos processos são mais indicadas.</p>
 <h2>Responsáveis Toledo do Brasil</h2>
@@ -2370,7 +2434,7 @@ a{color:#1a3a6b}
   <li>Sem estas pessoas de contato no cliente, devidamente treinadas no Guardian, a Toledo do Brasil se exime da responsabilidade pelo correto e satisfatório funcionamento do sistema.</li>
 </ul>
 
-<h1>3) Objetivo da Solução</h1>
+<h1>2) Objetivo da Solução</h1>
 <p>Fornecer uma solução para controle de acesso de caminhões, disponibilizando informações para gerenciamento das operações de recebimento e expedição de materiais e produtos, proporcionando segurança no processo de pesagem, com redução de erros operacionais e agilidade no fluxo de veículos.</p>
 <p><b>Cadastramento</b></p>
 <ul>${objBulletsCad.join('')}</ul>
@@ -2382,7 +2446,7 @@ a{color:#1a3a6b}
 <p style="text-align:center"><b>Peso líquido = | Pesagem inicial – Pesagem final |</b></p>
 <p>O peso líquido será o peso da carga do veículo. Uma pesagem inicial com peso superior ao da pesagem final caracteriza uma operação de recebimento de carga, enquanto uma pesagem final com peso superior à pesagem inicial caracteriza uma operação de expedição. Todos os dados de pesagem e acessos de veículos serão registrados em banco de dados do sistema Guardian.</p>
 
-<h1>4) Objetivo do Descritivo Funcional</h1>
+<h1>3) Objetivo do Descritivo Funcional</h1>
 <p>O objetivo deste documento é descrever as funcionalidades exigidas no sistema Guardian para atendimento das necessidades apresentadas por <b>${d.clientName}</b>.</p>
 <p>Serão apresentadas: a descrição, o funcionamento, o fluxo de veículos, entre outros detalhes das operações da solução.</p>
 <p>Mediante a aprovação de <b>${d.clientName}</b>, este documento servirá de base e referência para:</p>
@@ -2394,15 +2458,15 @@ a{color:#1a3a6b}
   <li><b>Acompanhamento</b> operacional aos usuários conforme contratos de fornecimento.</li>
 </ul>
 
-<h1>5) Composição da Solução</h1>
-<h2>5.1) Pontos de Controle</h2>
+<h1>4) Composição da Solução</h1>
+<h2>4.1) Pontos de Controle</h2>
 ${pcTable}
-<h2>5.2) Software — Licenciamento</h2>
+<h2>4.2) Software — Licenciamento</h2>
 ${swTable}
-<h2>5.3) Hardware</h2>
+<h2>4.3) Hardware</h2>
 ${hwTable}
 
-<h1>6) Arquitetura Ilustrativa da Solução</h1>
+<h1>5) Arquitetura Ilustrativa da Solução</h1>
 <p>A solução Guardian PRO é composta por módulos integrados que permitem o controle total do processo de pesagem e acesso de veículos. O software é executado em estações de trabalho (PCs) distribuídas nos pontos de controle e se comunica em tempo real com o servidor central Guardian e com a plataforma Cloud Prix.</p>
 <img data-gimg="arq_solucao">
 <p><b>Notas:</b></p>
@@ -2412,7 +2476,7 @@ ${hwTable}
   <li>Toda infraestrutura de rede e elétrica (inclusive switches) são de responsabilidade do cliente.</li>
 </ul>
 
-<h1>7) Fluxos (Rotas)</h1>
+<h1>6) Fluxos (Rotas)</h1>
 <p>Os fluxos determinam os acessos permitidos pelo Guardian e o tipo das operações que serão realizadas para o veículo cadastrado. Esta informação é obrigatória no cadastro de cada veículo e o Ticket será encerrado automaticamente no último ponto do fluxo.</p>
 <p>O Guardian verificará, em cada ponto de controle, se o veículo tem permissão para acessar aquele ponto conforme seu fluxo. Caso o veículo tente acessar um ponto não previsto, o acesso será bloqueado.</p>
 ${flxTable}
@@ -2597,7 +2661,7 @@ function resetarTudo(){
   document.getElementById('docRevision').value='Rev00';
   document.getElementById('revDesc').value='Geração do documento';
   // Desativar módulos
-  ['mod_fila','mod_inspecao','mod_tulha','mod_moega','mod_yms','mod_agend',
+  ['mod_fila','mod_inspecao','mod_moega','mod_yms','mod_agend',
    'mod_facil','mod_gw','mod_ad','mod_relatorio','mod_campos'].forEach(function(m){
     var el=document.getElementById(m);
     if(el && el.classList.contains('on')) toggleMod(m);
@@ -2685,11 +2749,10 @@ function getDefaultMods(){
 
 function getDefaultOps(){
   return {
-    balanca:  ['Pesagem Inicial','Pesagem Final','Pesagem Avulsa','Pesagem de Conferência'],
-    acesso:   ['Acesso de Entrada','Acesso de Saída','Controle de Fila'],
-    tulha:    ['Acesso Entrada Carregamento','Acesso Saída Carregamento'],
-    cadastro: ['Cadastramento','Pré-Cadastro'],
-    outro:    ['Administrativo','Monitoramento','Checkpoint','Outro'],
+    balanca:  ['Pesagem Inicial','Pesagem Final','Pesagem Avulsa','Atualização de Tara manual','Pesagem por Eixo','Dosagem','Pesagem por Compartimento','Pesagem de Cavalo (Inicial)','Pesagem de Cavalo (Final)'],
+    acesso:   ['Acesso Entrada','Acesso Saída','Checkpoint','Checkin'],
+    cadastro: ['Pré-Cadastro'],
+    outro:    ['Administrativo','Monitoramento de filas','Inspeção','Movimentação de Visitantes'],
   };
 }
 
@@ -2886,7 +2949,7 @@ function renderAdminOps(){
   var container = document.getElementById('adminOpsBody');
   if(!container) return;
   container.innerHTML='';
-  var labels = {balanca:'Balança',acesso:'Portaria / Acesso',tulha:'Tulha / Carregamento',cadastro:'Cadastramento',outro:'Outro'};
+  var labels = {balanca:'Balança',acesso:'Acesso',cadastro:'Cadastramento',outro:'Outro'};
   Object.keys(adminState.ops).forEach(function(tipo){
     var div = document.createElement('div');
     div.style.cssText='margin-bottom:16px';
