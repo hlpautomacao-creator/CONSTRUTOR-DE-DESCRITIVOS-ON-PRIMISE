@@ -1,5 +1,12 @@
 [
   {
+    "versao": "v1.0.35",
+    "data": "2026-04-02",
+    "categoria": "Manutencao",
+    "descricao": "Imagem incorreta removida do topico Fluxos (fluxo_seq); mapa de larguras por chave (tag_cartao=10cm, tela_inspecao=10cm, tela_login=12cm); Aprovacao em folha dedicada via page break (pbk handler no htmlToParas)",
+    "responsavel": "Patrik"
+  },
+  {
     "versao": "v1.0.34",
     "data": "2026-03-31",
     "categoria": "Melhoria",

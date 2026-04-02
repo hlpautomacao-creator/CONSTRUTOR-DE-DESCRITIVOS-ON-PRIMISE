@@ -489,13 +489,22 @@ function htmlToParas(html, imgs) {
     htmlWithPlaceholders = htmlWithPlaceholders.replace(dgMatch[0], placeholder);
   }
 
+  // Extrair <div class="pbk"> — quebra de página explícita do builder
+  htmlWithPlaceholders = htmlWithPlaceholders.replace(/<div[^>]+class="pbk"[^>]*>[\s\S]*?<\/div>/gi, '__PBK__');
+
   // Agora processar o HTML sem tabelas nem imagens guardian
   // Dividir em segmentos por tags de bloco
-  const segments = htmlWithPlaceholders.split(/(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>|<p[^>]*>[\s\S]*?<\/p>|<ul[^>]*>[\s\S]*?<\/ul>|<ol[^>]*>[\s\S]*?<\/ol>|__TABLE_\d+__|__GIMG_\d+__)/gi).filter(s => s.trim());
+  const segments = htmlWithPlaceholders.split(/(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>|<p[^>]*>[\s\S]*?<\/p>|<ul[^>]*>[\s\S]*?<\/ul>|<ol[^>]*>[\s\S]*?<\/ol>|__TABLE_\d+__|__GIMG_\d+__|__PBK__)/gi).filter(s => s.trim());
 
   for (const seg of segments) {
     const s = seg.trim();
     if (!s) continue;
+
+    // Quebra de página explícita (div.pbk do builder)
+    if (s === '__PBK__') {
+      result.push(pageBreak());
+      continue;
+    }
 
     // Tabela placeholder
     const tph = s.match(/^__TABLE_(\d+)__$/);
@@ -511,12 +520,19 @@ function htmlToParas(html, imgs) {
       const { key } = dgimgs[parseInt(gph[1])];
       if (imgs[key]) {
         try {
+          // Largura padrão por tipo de imagem
+          const IMG_WIDTHS = {
+            tag_cartao:    10.0,  // TAG físico — menor, cabe em meia coluna
+            tela_inspecao: 10.0,  // Tela mobile — mais estreita
+            tela_login:    12.0,  // Tela login — média
+            arq_solucao:   16.0,  // Arquitetura — ocupa quase a largura toda
+          };
           const b64 = imgs[key];
           const ext = b64.startsWith('data:image/jpeg') ? 'jpg' : 'png';
           const buf = Buffer.from(b64.includes('base64,') ? b64.split('base64,')[1] : b64, 'base64');
           const ratio = getImageAspectRatio(buf, ext);
-          const wCm = 15.0;
-          const hCm = Math.min(wCm * ratio, 12.0);
+          const wCm  = IMG_WIDTHS[key] || 15.0;
+          const hCm  = Math.min(wCm * ratio, 12.0);
           const pars = imgPara(b64, wCm, '', { before: 20, after: 30, hCm });
           if (pars) result.push(...pars);
         } catch(e) {

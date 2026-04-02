@@ -2240,6 +2240,7 @@ ${d.mods.gw?'<p>O Gestor Web fornece, via browser, acesso às consultas e relat�
   <li>Aprovar este descritivo funcional antes do início da implantação.</li>
 </ul>
 
+<div class="pbk"></div>
 <h1>${secNum++}) Aprovação do Descritivo Funcional ${d.docRevision||'Rev00'}</h1>
 <p><b>CT Sistema:</b> ${d.ctHardware||'___________'} &nbsp;&nbsp;&nbsp; <b>Cloud:</b> ${d.ctCloud||'___________'}</p>
 <p>Os(as) senhores(as) abaixo relacionados(as) estabelecem este termo de aceitação para a Toledo do Brasil, concordando em receber os produtos e serviços citados nesse descritivo pelas condições estabelecidas no mesmo.</p>
@@ -2389,7 +2390,6 @@ ${hwTable}
 <p>Os fluxos determinam os acessos permitidos pelo Guardian e o tipo das operações que serão realizadas para o veículo cadastrado. Esta informação é obrigatória no cadastro de cada veículo e o Ticket será encerrado automaticamente no último ponto do fluxo.</p>
 <p>O Guardian verificará, em cada ponto de controle, se o veículo tem permissão para acessar aquele ponto conforme seu fluxo. Caso o veículo tente acessar um ponto não previsto, o acesso será bloqueado.</p>
 ${flxTable}
-<img data-gimg="fluxo_seq">
 ${d.flxObs?`<div class="obs"><b>Observações:</b> ${d.flxObs}</div>`:''}
 <div class="note"><b>Nota:</b> Alterações de fluxos serão realizadas na tela de "Manutenção de Pesagem" por um operador com as devidas permissões. Demais fluxos deverão ser definidos e especificados pelo cliente antes ou durante a etapa de aprovação deste descritivo.</div>
 
